@@ -8,12 +8,12 @@
 @if ($role === 'Admin')
     <nav class="role-menu role-menu-admin" aria-label="Chức năng Admin">
         <div class="role-menu-heading">QUẢN TRỊ HỆ THỐNG</div>
-        <span class="role-menu-item role-menu-disabled" aria-disabled="true"><span class="role-menu-icon" aria-hidden="true">▦</span><span>Tổng quan<small>Chưa có trang</small></span></span>
-        <span class="role-menu-item role-menu-disabled" aria-disabled="true"><span class="role-menu-icon" aria-hidden="true">▣</span><span>Danh sách sản phẩm<small>Thêm · Ẩn · Sửa</small></span></span>
-        <span class="role-menu-item role-menu-disabled" aria-disabled="true"><span class="role-menu-icon" aria-hidden="true">☷</span><span>Danh sách loại<small>Thêm · Ẩn · Sửa</small></span></span>
-        <span class="role-menu-item role-menu-disabled" aria-disabled="true"><span class="role-menu-icon" aria-hidden="true">♙</span><span>Danh sách tài khoản<small>Thêm · Cấm tài khoản</small></span></span>
-        <span class="role-menu-item role-menu-disabled" aria-disabled="true"><span class="role-menu-icon" aria-hidden="true">↗</span><span>Thống kê Doanh thu<small>Chưa có trang</small></span></span>
-        <p class="role-menu-note">Các mục chưa hoàn thành chưa được gắn đường dẫn.</p>
+        <a class="role-menu-item" href="{{ route('admin.dashboard') }}"><span class="role-menu-icon" aria-hidden="true">▦</span><span>Tổng quan</span></a>
+        <a class="role-menu-item" href="{{ route('admin.orders.index') }}"><span class="role-menu-icon" aria-hidden="true">▣</span><span>Đơn hàng</span></a>
+        <a class="role-menu-item" href="{{ route('admin.users.index') }}"><span class="role-menu-icon" aria-hidden="true">♙</span><span>Người dùng</span></a>
+        <a class="role-menu-item" href="{{ route('admin.reviews.index') }}"><span class="role-menu-icon" aria-hidden="true">☆</span><span>Đánh giá</span></a>
+        <a class="role-menu-item" href="{{ route('admin.vouchers.index') }}"><span class="role-menu-icon" aria-hidden="true">％</span><span>Khuyến mãi</span></a>
+        <a class="role-menu-item" href="{{ route('admin.reports.index') }}"><span class="role-menu-icon" aria-hidden="true">↗</span><span>Thống kê / báo cáo</span></a>
     </nav>
 @elseif ($role === 'KhachHang')
     <nav class="role-menu role-menu-customer" aria-label="Chức năng khách hàng">

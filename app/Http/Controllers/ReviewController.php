@@ -23,7 +23,7 @@ class ReviewController extends Controller
             'customer_name' => $user?->name ?? $validated['name'],
             'rating' => $validated['rating'],
             'content' => $validated['content'],
-            'is_approved' => true,
+            'is_approved' => false,
         ];
 
         if ($user) {
@@ -37,6 +37,6 @@ class ReviewController extends Controller
 
         return redirect()
             ->to(route('products.show', $product).'#reviews')
-            ->with('review_status', 'Cảm ơn bạn đã gửi đánh giá.');
+            ->with('review_status', 'Cảm ơn bạn đã gửi đánh giá. Đánh giá sẽ hiển thị sau khi được duyệt.');
     }
 }

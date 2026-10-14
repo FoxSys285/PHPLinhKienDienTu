@@ -17,7 +17,7 @@
             <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
         @endif
 
-        <form action="{{ route('checkout.store') }}" method="post">
+        <form id="checkoutForm" action="{{ route('checkout.store') }}" method="post">
             @csrf
             <div class="cart-layout">
                 <div>
@@ -73,24 +73,41 @@
                     </section>
                 </div>
 
+            </form>
+
                 <aside class="cart-summary" aria-label="Tóm tắt đơn hàng">
                     <div class="summary-box">
                         <span class="summary-kicker">TÓM TẮT ĐƠN HÀNG</span>
                         <h2>Thanh toán</h2>
+                        <form action="{{ route('checkout.voucher.apply') }}" method="post" class="mb-3">
+                            @csrf
+                            <label class="form-label" for="voucherCode">Mã khuyến mãi</label>
+                            <div class="d-flex gap-2">
+                                <input class="form-control" id="voucherCode" name="code" value="{{ old('code', $voucher?->code) }}" maxlength="40" placeholder="Nhập mã giảm giá">
+                                <button class="button-outline" type="submit">Áp dụng</button>
+                            </div>
+                        </form>
+                        @if ($voucher)
+                            <div class="summary-row"><span>Mã {{ $voucher->code }}</span><strong>−{{ number_format($discountAmount, 0, ',', '.') }}₫</strong></div>
+                            <form action="{{ route('checkout.voucher.remove') }}" method="post" class="mb-3">
+                                @csrf
+                                @method('DELETE')
+                                <button class="button-outline" type="submit">Gỡ mã</button>
+                            </form>
+                        @endif
                         <div class="summary-row"><span>Tạm tính</span><strong>{{ number_format($subtotal, 0, ',', '.') }}₫</strong></div>
                         <div class="summary-row"><span>Phí giao hàng</span><strong>{{ $shippingFee === 0 ? 'Miễn phí' : number_format($shippingFee, 0, ',', '.') . '₫' }}</strong></div>
                         <div class="summary-total"><span>Tổng tiền</span><strong>{{ number_format($total, 0, ',', '.') }}₫</strong></div>
                         <label class="form-label" for="paymentMethod">Phương thức thanh toán</label>
-                        <select class="form-select mb-3" id="paymentMethod" name="payment_method" required>
+                        <select class="form-select mb-3" id="paymentMethod" name="payment_method" form="checkoutForm" required>
                             <option value="cod" @selected(old('payment_method', 'cod') === 'cod')>Thanh toán khi nhận hàng (COD)</option>
                             <option value="bank_transfer" @selected(old('payment_method') === 'bank_transfer')>Chuyển khoản sau khi xác nhận</option>
                         </select>
-                        <button class="button-primary cart-checkout-button" type="submit">Đặt hàng <span aria-hidden="true">→</span></button>
+                        <button class="button-primary cart-checkout-button" type="submit" form="checkoutForm">Đặt hàng <span aria-hidden="true">→</span></button>
                         <p class="cart-safe-note"><span aria-hidden="true">✓</span> Đơn hàng sẽ được xác nhận trước khi giao.</p>
                     </div>
                     <div class="cart-help"><span aria-hidden="true">✦</span><div><strong>Cần tư vấn linh kiện?</strong><a href="tel:19006868">Gọi 1900 6868</a></div></div>
                 </aside>
             </div>
-        </form>
     </section>
 @endsection

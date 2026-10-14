@@ -48,7 +48,7 @@
                     @if ($isAdmin)
                         <a class="admin-access-link" href="{{ url('/admin') }}">Khu vực quản trị</a>
                     @endif
-                    <form action="{{ url('/logout') }}" method="post" class="account-logout-form">
+                    <form action="{{ route('logout') }}" method="post" class="account-logout-form">
                         @csrf
                         <button type="submit" class="account-logout">Đăng xuất</button>
                     </form>

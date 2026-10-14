@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Voucher;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class CheckoutController extends Controller
             ? array_values(array_filter(array_map('intval', $requestedIds), fn (int $id): bool => $id > 0))
             : [];
 
-        $cartItemsQuery = $cart->items()->with('product.category');
+        $cartItemsQuery = $cart->items()->with('product.category')->whereHas('product');
 
         if ($selectedIds !== []) {
             $cartItemsQuery->whereIn('product_id', $selectedIds);
@@ -39,13 +40,63 @@ class CheckoutController extends Controller
 
         $subtotal = $cartItems->sum(fn ($item): float => (float) $item->product->price * $item->quantity);
         $shippingFee = $subtotal >= 500000 ? 0 : 30000;
+        $voucher = null;
+        $discountAmount = 0.0;
+        $voucherCode = $request->session()->get('checkout.voucher_code');
+
+        if (is_string($voucherCode) && $voucherCode !== '') {
+            $voucher = Voucher::query()->where('code', $voucherCode)->first();
+
+            if ($voucher !== null && $this->voucherIsEligible($voucher, (float) $subtotal)) {
+                $discountAmount = $this->voucherDiscount($voucher, (float) $subtotal);
+            } else {
+                $request->session()->forget('checkout.voucher_code');
+                $voucher = null;
+                session()->flash('checkout_error', 'Mã khuyến mãi không còn đủ điều kiện áp dụng.');
+            }
+        }
 
         return view('layouts.pages.user.thanhtoan', [
             'cartItems' => $cartItems,
             'subtotal' => $subtotal,
             'shippingFee' => $shippingFee,
-            'total' => $subtotal + $shippingFee,
+            'voucher' => $voucher,
+            'discountAmount' => $discountAmount,
+            'total' => $subtotal + $shippingFee - $discountAmount,
         ]);
+    }
+
+    public function applyVoucher(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:40', 'regex:/^[A-Za-z0-9_-]+$/'],
+        ]);
+        $code = Str::upper(trim($validated['code']));
+        $cart = $this->currentCart($request);
+        $selectedIds = $request->session()->get('checkout.selected', []);
+        $items = $cart->items()->with('product')->whereHas('product')->when($selectedIds !== [], fn ($query) => $query->whereIn('product_id', $selectedIds))->get();
+
+        if ($items->isEmpty()) {
+            return redirect()->route('cart.index')->withErrors(['code' => 'Giỏ hàng đang trống.']);
+        }
+
+        $subtotal = $items->sum(fn ($item): float => (float) $item->product->price * $item->quantity);
+        $voucher = Voucher::query()->where('code', $code)->first();
+
+        if ($voucher === null || ! $this->voucherIsEligible($voucher, (float) $subtotal)) {
+            return back()->withErrors(['code' => 'Mã không hợp lệ, đã hết hạn hoặc chưa đủ điều kiện sử dụng.']);
+        }
+
+        $request->session()->put('checkout.voucher_code', $voucher->code);
+
+        return back()->with('status', 'Đã áp dụng mã '.$voucher->code.'.');
+    }
+
+    public function removeVoucher(Request $request): RedirectResponse
+    {
+        $request->session()->forget('checkout.voucher_code');
+
+        return back()->with('status', 'Đã gỡ mã khuyến mãi.');
     }
 
     public function store(Request $request): RedirectResponse
@@ -70,7 +121,9 @@ class CheckoutController extends Controller
         $selectedIds = array_map('intval', $validated['selected']);
         $quantities = $validated['quantities'] ?? [];
 
-        $order = DB::transaction(function () use ($cart, $request, $validated, $selectedIds, $quantities): Order {
+        $voucherCode = $request->session()->get('checkout.voucher_code');
+
+        $order = DB::transaction(function () use ($cart, $request, $validated, $selectedIds, $quantities, $voucherCode): Order {
             $cartItems = $cart->items()
                 ->whereIn('product_id', $selectedIds)
                 ->lockForUpdate()
@@ -113,6 +166,21 @@ class CheckoutController extends Controller
             }
 
             $shippingFee = $subtotal >= 500000 ? 0 : 30000;
+            $voucher = null;
+            $discountAmount = 0.0;
+
+            if (is_string($voucherCode) && $voucherCode !== '') {
+                $voucher = Voucher::query()->where('code', $voucherCode)->lockForUpdate()->first();
+
+                if ($voucher === null || ! $this->voucherIsEligible($voucher, $subtotal)) {
+                    throw ValidationException::withMessages([
+                        'code' => 'Mã khuyến mãi không còn đủ điều kiện. Vui lòng kiểm tra lại đơn hàng.',
+                    ]);
+                }
+
+                $discountAmount = $this->voucherDiscount($voucher, $subtotal);
+            }
+
             $order = Order::query()->create([
                 'user_id' => $request->user()?->id,
                 'order_number' => 'MV'.Str::upper((string) Str::ulid()),
@@ -123,11 +191,18 @@ class CheckoutController extends Controller
                 'note' => $validated['note'] ?? null,
                 'subtotal' => $subtotal,
                 'shipping_fee' => $shippingFee,
-                'total' => $subtotal + $shippingFee,
+                'discount_amount' => $discountAmount,
+                'voucher_id' => $voucher?->id,
+                'voucher_code' => $voucher?->code,
+                'total' => $subtotal + $shippingFee - $discountAmount,
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => $validated['payment_method'] === 'cod' ? 'unpaid' : 'awaiting_transfer',
                 'status' => 'pending',
             ]);
+
+            if ($voucher !== null) {
+                $voucher->increment('used_count');
+            }
 
             foreach ($lines as $line) {
                 $product = $line['product'];
@@ -152,6 +227,7 @@ class CheckoutController extends Controller
         });
 
         $request->session()->forget('checkout.selected');
+        $request->session()->forget('checkout.voucher_code');
 
         return redirect()->route('orders.success', ['order' => $order->order_number]);
     }
@@ -170,7 +246,7 @@ class CheckoutController extends Controller
 
         $cart = $this->currentCart($request);
         $selectedIds = array_map('intval', $validated['selected']);
-        $items = $cart->items()->with('product')->whereIn('product_id', $selectedIds)->get();
+        $items = $cart->items()->with('product')->whereHas('product')->whereIn('product_id', $selectedIds)->get();
 
         if ($items->count() !== count($selectedIds)) {
             return redirect()->route('cart.index')->withErrors([
@@ -208,5 +284,29 @@ class CheckoutController extends Controller
             ['session_id' => $request->session()->getId()],
             ['user_id' => $request->user()?->id],
         );
+    }
+
+    private function voucherIsEligible(Voucher $voucher, float $subtotal): bool
+    {
+        $currentTime = now();
+
+        return $voucher->is_active
+            && ($voucher->starts_at === null || $voucher->starts_at->lte($currentTime))
+            && ($voucher->ends_at === null || $voucher->ends_at->gte($currentTime))
+            && $subtotal >= (float) $voucher->minimum_order
+            && ($voucher->usage_limit === null || $voucher->used_count < $voucher->usage_limit);
+    }
+
+    private function voucherDiscount(Voucher $voucher, float $subtotal): float
+    {
+        $discount = $voucher->discount_type === 'percent'
+            ? $subtotal * (float) $voucher->discount_value / 100
+            : (float) $voucher->discount_value;
+
+        if ($voucher->max_discount !== null) {
+            $discount = min($discount, (float) $voucher->max_discount);
+        }
+
+        return round(min($discount, $subtotal), 2);
     }
 }

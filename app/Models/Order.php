@@ -17,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'note',
     'subtotal',
     'shipping_fee',
+    'discount_amount',
+    'voucher_id',
+    'voucher_code',
     'total',
     'payment_method',
     'payment_status',
@@ -45,6 +48,16 @@ class Order extends Model
     }
 
     /**
+     * Get the voucher used for this order, when available.
+     *
+     * @return BelongsTo<Voucher, $this>
+     */
+    public function voucher(): BelongsTo
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -54,6 +67,7 @@ class Order extends Model
         return [
             'subtotal' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

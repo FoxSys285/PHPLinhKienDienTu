@@ -6,8 +6,10 @@
     <meta name="theme-color" content="#101d35">
     <title>@yield('title', 'Quản trị') - Mạch Việt</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <link rel="stylesheet" href="{{ asset('css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}">
     <link rel="stylesheet" href="{{ asset('css/role-menus.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     @stack('styles')
 </head>
 <body class="admin-page">
@@ -27,7 +29,7 @@
                     <span class="admin-user-avatar" aria-hidden="true">{{ mb_substr(auth()->user()?->name ?? 'A', 0, 1) }}</span>
                     <span><strong>{{ auth()->user()?->name ?? 'Quản trị viên' }}</strong><small>Quản trị viên</small></span>
                     @auth
-                        <form action="{{ url('/logout') }}" method="post" class="account-logout-form">
+                        <form action="{{ route('logout') }}" method="post" class="account-logout-form">
                             @csrf
                             <button type="submit" class="account-logout">Đăng xuất</button>
                         </form>
@@ -35,6 +37,12 @@
                 </div>
             </header>
             <main class="admin-main">
+                @if (session('status'))
+                    <div class="admin-alert admin-alert-success" role="status">{{ session('status') }}</div>
+                @endif
+                @if ($errors->any())
+                    <div class="admin-alert admin-alert-error" role="alert">{{ $errors->first() }}</div>
+                @endif
                 @yield('content')
             </main>
             <footer class="admin-footer">© {{ now()->year }} Mạch Việt · Hệ thống Quản lý Linh kiện Điện tử</footer>
