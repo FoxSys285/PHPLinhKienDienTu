@@ -63,6 +63,12 @@
                         <div class="product-rating"><span class="rating-stars" aria-label="5 sao">★★★★★</span><span>{{ data_get($product, 'rating', 0) }}</span><span>·</span><span>Đã bán {{ data_get($product, 'sold_count', 0) }}</span></div>
                         <div class="product-price-row"><span class="product-price">{{ data_get($product, 'formatted_price', number_format((float) data_get($product, 'price', 0), 0, ',', '.') . '₫') }}</span><span class="product-old-price">{{ data_get($product, 'formatted_old_price') }}</span></div>
                         <a class="product-card-link" href="{{ route('products.show', $productId) }}">Xem chi tiết <span>→</span></a>
+                        <form class="catalog-add-form" action="{{ route('cart.store') }}" method="post">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $productId }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button class="button-primary catalog-add-button" type="submit" @disabled((int) data_get($product, 'stock', 0) < 1)>Thêm vào giỏ hàng</button>
+                        </form>
                     </div>
                 </article>
             @endforeach

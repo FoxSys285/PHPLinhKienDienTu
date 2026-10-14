@@ -73,7 +73,6 @@
                                 </article>
                             @endforeach
                         </div>
-                        <button class="button-outline cart-update-button" type="submit">Cập nhật giỏ hàng</button>
                         <a class="cart-continue-link" href="{{ route('products.index') }}"><span aria-hidden="true">←</span> Tiếp tục mua sắm</a>
                     </section>
 

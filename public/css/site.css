@@ -169,6 +169,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .catalog-grid .product-info { padding: 11px 12px 12px; }
 .catalog-grid .product-title { min-height: 35px; font-size: 11px; }
 .catalog-grid .product-price { font-size: 13px; }
+.catalog-add-form { margin-top: 8px; }
+.catalog-add-button { width: 100%; min-height: 34px; padding: 0 8px; border-radius: 6px; font-size: 9px; white-space: nowrap; }
+.catalog-add-button:disabled { border-color: #cbd4e2; background: #cbd4e2; cursor: not-allowed; }
 .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 21px; }
 .pagination a { display: grid; place-items: center; min-width: 30px; height: 30px; padding: 0 8px; border: 1px solid var(--line); border-radius: 5px; background: #fff; color: #6d7a8f; font-size: 10px; }
 .pagination a.current, .pagination a:hover { border-color: var(--blue); background: var(--blue); color: #fff; }
@@ -283,6 +286,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
     .catalog-grid .product-title { font-size: 9px; }
     .product-price { font-size: 11px; }
     .product-old-price { font-size: 7px; }
+    .catalog-add-button { min-height: 31px; font-size: 8px; }
     .category-tiles { grid-template-columns: 1fr 1fr; gap: 7px; }
     .category-tile { min-height: 62px; gap: 7px; padding: 8px; }
     .category-tile-icon { width: 32px; height: 32px; flex-basis: 32px; font-size: 16px; }
