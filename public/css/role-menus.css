@@ -1,0 +1,77 @@
+.role-menu { padding: 16px 12px; }
+.role-menu-heading { padding: 0 8px 10px; font-size: 10px; font-weight: 750; letter-spacing: .09em; color: #8090a8; }
+.role-menu-item { display: flex; align-items: center; gap: 10px; min-height: 39px; padding: 9px 9px; border-radius: 7px; color: #536179; font-size: 11px; font-weight: 600; }
+a.role-menu-item:hover { background: #f1f5ff; color: #246bfd; }
+.role-menu-icon { flex: 0 0 21px; text-align: center; font-size: 17px; font-weight: 400; color: #8795aa; }
+.role-menu-item small { display: block; margin-top: 3px; font-size: 10px; color: #8b97aa; font-weight: 400; }
+.role-menu-divider { height: 1px; margin: 10px 8px; background: #edf0f5; }
+.role-menu-disabled { cursor: default; color: #8995a8; }
+.role-menu-disabled .role-menu-icon { color: #a2aec0; }
+.role-menu-note { margin: 20px 8px 0; font-size: 10px; line-height: 1.7; color: #91a0b6; }
+.category-sidebar > .role-menu { border-bottom: 1px solid #e7ebf2; }
+.account-logout-form { margin: 0; }
+.account-logout { padding: 7px 10px; border: 1px solid #e0e7f1; border-radius: 6px; background: #fff; color: #5c6b83; font: inherit; font-size: 11px; cursor: pointer; }
+.account-logout:hover { color: #246bfd; background: #f4f7ff; border-color: #bfd2ff; }
+.admin-access-link { color: #246bfd; font-size: 11px; font-weight: 600; }
+.admin-page { min-height: 100vh; }
+.admin-shell { display: grid; grid-template-columns: 255px minmax(0, 1fr); min-height: 100vh; }
+.admin-sidebar { display: flex; flex-direction: column; padding: 27px 13px; color: #d1ddee; background: #101d35; }
+.admin-brand { padding: 0 12px 31px; }
+.admin-brand .brand-copy strong { color: #fff; font-size: 15px; }
+.admin-brand .brand-copy small { color: #91a5c4; }
+.admin-sidebar .role-menu { padding: 9px 4px; }
+.admin-sidebar .role-menu-heading { color: #879bb9; }
+.admin-sidebar .role-menu-item { padding: 12px 11px; font-size: 12px; gap: 12px; }
+.admin-sidebar .role-menu-item small { color: #899bb8; }
+.admin-sidebar .role-menu-disabled { color: #b8c7df; }
+.admin-sidebar .role-menu-icon { color: #84a0c6; }
+.admin-sidebar .role-menu-note { padding: 13px; margin: 20px 5px; border: 1px solid #ffffff14; border-radius: 8px; background: #ffffff04; color: #9aacca; }
+.admin-sidebar-footer { margin-top: auto; display: flex; align-items: center; gap: 9px; padding: 25px 12px 0; border-top: 1px solid #ffffff12; font-size: 10px; color: #91a5c4; }
+.admin-status-dot { width: 6px; height: 6px; background: #68d8b5; border-radius: 50%; flex-shrink: 0; }
+.admin-workspace { display: flex; flex-direction: column; min-width: 0; }
+.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 22px 32px; border-bottom: 1px solid #e7ebf2; background: #fff; }
+.admin-header > div:first-child > strong { display: block; font-size: 16px; margin-top: 5px; }
+.admin-header-eyebrow { font-size: 9px; color: #8490a4; font-weight: 650; letter-spacing: .06em; }
+.admin-header-account { display: flex; align-items: center; gap: 10px; }
+.admin-header-account > span > strong, .admin-header-account small { display: block; }
+.admin-header-account > span > strong { font-size: 12px; }
+.admin-header-account small { color: #8b97aa; font-size: 10px; }
+.admin-header-account .account-logout-form { margin-left: 13px; }
+.admin-user-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; color: #246bfd; background: #edf3ff; font-weight: 700; }
+.admin-main { flex: 1; padding: 35px 32px; }
+.admin-welcome { max-width: 850px; padding: 45px; background: #fff; border: 1px solid #e7ebf2; border-radius: 16px; box-shadow: 0 8px 24px #17274405; }
+.admin-welcome-icon { display: grid; place-items: center; width: 56px; height: 56px; background: #edf3ff; color: #246bfd; font-size: 27px; border-radius: 15px; margin-bottom: 28px; }
+.admin-welcome-eyebrow { color: #246bfd; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.admin-welcome h1 { font-size: 30px; letter-spacing: -.03em; margin: 12px 0; }
+.admin-welcome > p { color: #76839b; font-size: 13px; }
+.admin-welcome-info { display: flex; gap: 12px; align-items: flex-start; margin-top: 27px; padding: 15px 18px; border-radius: 8px; background: #f5f8fe; color: #6e7e96; }
+.admin-welcome-info > span { font-size: 18px; color: #246bfd; }
+.admin-welcome-info p { margin: 0; font-size: 12px; line-height: 1.8; }
+.admin-footer { padding: 20px 32px; color: #8591a4; font-size: 10px; }
+:focus-visible { outline: 3px solid #7ba5ff; outline-offset: 3px; }
+@media (max-width: 820px) {
+    .category-sidebar.has-role-menu { display: block; }
+    .category-sidebar.has-role-menu > :not(.role-menu) { display: none; }
+    .category-sidebar > .role-menu { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 0; }
+    .category-sidebar .role-menu-heading, .category-sidebar .role-menu-divider { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+    .admin-shell { grid-template-columns: 225px minmax(0, 1fr); }
+    .admin-header, .admin-main, .admin-footer { padding: 24px; }
+    .admin-header { flex-wrap: wrap; }
+    .admin-welcome { padding: 30px; }
+}
+@media (max-width: 650px) {
+    .admin-shell { grid-template-columns: 1fr; }
+    .admin-sidebar { padding: 20px 15px; }
+    .admin-brand { padding-bottom: 20px; }
+    .admin-sidebar .role-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+    .admin-sidebar .role-menu-heading, .admin-sidebar .role-menu-note { grid-column: 1 / -1; }
+    .admin-sidebar .role-menu-note { margin: 10px 5px; }
+    .admin-sidebar-footer { padding-top: 15px; }
+    .admin-main { padding: 20px 16px; }
+    .admin-welcome { padding: 25px; }
+    .admin-welcome h1 { font-size: 26px; }
+    .admin-header { padding: 20px; gap: 15px; }
+    .admin-footer { padding: 15px 20px; }
+}
