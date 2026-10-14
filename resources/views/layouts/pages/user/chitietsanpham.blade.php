@@ -70,12 +70,12 @@
                         <div class="detail-spec"><span aria-hidden="true">✓</span>{{ $feature }}</div>
                     @endforeach
                 </div>
-                <form action="{{ url('/gio-hang/them') }}" method="post" class="purchase-form">
+                <form action="{{ route('cart.store') }}" method="post" class="purchase-form">
                     @csrf
                     <input type="hidden" name="product_id" value="{{ $productId }}">
-                    <label class="purchase-quantity">Số lượng<input class="form-control" id="quantity" name="quantity" type="number" min="1" max="99" value="1"></label>
-                    <button class="button-primary btn btn-primary" type="submit"><span aria-hidden="true">＋</span> Thêm vào giỏ</button>
-                    <button class="button-outline btn btn-outline-primary" type="submit" name="buy_now" value="1">Mua ngay</button>
+                    <label class="purchase-quantity">Số lượng<input class="form-control" id="quantity" name="quantity" type="number" min="1" max="{{ min(99, (int) data_get($product, 'stock', 99)) }}" value="{{ old('quantity', 1) }}"></label>
+                    <button class="button-primary btn btn-primary" type="submit" @disabled(data_get($product, 'stock', 0) < 1)><span aria-hidden="true">＋</span> Thêm vào giỏ</button>
+                    <button class="button-outline btn btn-outline-primary" type="submit" name="buy_now" value="1" @disabled(data_get($product, 'stock', 0) < 1)>Mua ngay</button>
                 </form>
                 <div class="product-assurances">
                     <span><strong>↗ Giao hàng nhanh</strong>Toàn quốc 1–3 ngày</span>
@@ -134,27 +134,29 @@
                 </div>
                 <div class="review-invite"><span class="review-invite-icon" aria-hidden="true">✦</span><div><strong>Bạn đã sử dụng sản phẩm?</strong><p>Chia sẻ trải nghiệm để giúp cộng đồng maker chọn đúng linh kiện.</p></div></div>
             </div>
-            @auth
-                <form action="{{ url('/san-pham/' . $productId . '/danh-gia') }}" method="post" class="review-form">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $productId }}">
-                    <h3>Viết đánh giá của bạn</h3>
-                    <fieldset class="review-rating-field">
-                        <legend>Chọn số sao</legend>
-                        <div class="star-picker">
-                            @for ($rating = 5; $rating >= 1; $rating--)
-                                <input id="rating-{{ $rating }}" type="radio" name="rating" value="{{ $rating }}" required>
-                                <label for="rating-{{ $rating }}" title="{{ $rating }} sao">★</label>
-                            @endfor
-                        </div>
-                    </fieldset>
-                    <label class="review-content-label" for="reviewContent">Nhận xét</label>
-                    <textarea class="form-control" id="reviewContent" name="content" rows="4" minlength="10" maxlength="1000" required placeholder="Chia sẻ chất lượng, khả năng sử dụng hoặc trải nghiệm mua hàng của bạn..."></textarea>
-                    <div class="review-form-footer"><small>Tối thiểu 10 ký tự, tối đa 1.000 ký tự.</small><button class="button-primary btn btn-primary" type="submit">Gửi đánh giá</button></div>
-                </form>
-            @else
-                <div class="review-login-prompt"><span>Bạn cần đăng nhập để gửi đánh giá.</span><a class="button-outline btn btn-outline-primary" href="{{ url('/dang-nhap') }}">Đăng nhập</a></div>
-            @endauth
+            @if ($errors->any())
+                <div class="review-notice is-error" role="alert">{{ $errors->first() }}</div>
+            @endif
+            <form action="{{ route('products.reviews.store', $product) }}" method="post" class="review-form">
+                @csrf
+                <h3>Viết đánh giá của bạn</h3>
+                @guest
+                    <label class="review-content-label" for="reviewName">Tên của bạn</label>
+                    <input class="form-control" id="reviewName" name="name" value="{{ old('name') }}" maxlength="120" required>
+                @endguest
+                <fieldset class="review-rating-field">
+                    <legend>Chọn số sao</legend>
+                    <div class="star-picker">
+                        @for ($rating = 5; $rating >= 1; $rating--)
+                            <input id="rating-{{ $rating }}" type="radio" name="rating" value="{{ $rating }}" @checked((int) old('rating') === $rating) required>
+                            <label for="rating-{{ $rating }}" title="{{ $rating }} sao">★</label>
+                        @endfor
+                    </div>
+                </fieldset>
+                <label class="review-content-label" for="reviewContent">Nhận xét</label>
+                <textarea class="form-control" id="reviewContent" name="content" rows="4" minlength="10" maxlength="1000" required placeholder="Chia sẻ chất lượng, khả năng sử dụng hoặc trải nghiệm mua hàng của bạn...">{{ old('content') }}</textarea>
+                <div class="review-form-footer"><small>Tối thiểu 10 ký tự, tối đa 1.000 ký tự.</small><button class="button-primary btn btn-primary" type="submit">Gửi đánh giá</button></div>
+            </form>
             <div class="review-list list-group list-group-flush">
                 @forelse ($reviews as $review)
                     @php($reviewRating = max(0, min(5, (int) data_get($review, 'rating', 0))))

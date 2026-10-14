@@ -7,7 +7,8 @@
     $products = $products ?? [];
     $productCategories = $productCategories ?? ['Tất cả', 'Bo mạch', 'Cảm biến', 'Nguồn', 'Dụng cụ'];
     $query = request('q', $query ?? '');
-    $selectedCategory = request('category', $selectedCategory ?? 'Tất cả');
+    $selectedCategory = $selectedCategory ?? 'Tất cả';
+    $selectedCategorySlug = request('category', $selectedCategorySlug ?? '');
     $sort = request('sort', $sort ?? 'featured');
 @endphp
 
@@ -36,7 +37,7 @@
         @endforeach
         <form class="sort-form" action="{{ route('products.index') }}" method="get">
             <input type="hidden" name="q" value="{{ $query }}">
-            <input type="hidden" name="category" value="{{ $selectedCategory === 'Tất cả' ? '' : $selectedCategory }}">
+            <input type="hidden" name="category" value="{{ $selectedCategorySlug }}">
             <label class="visually-hidden" for="sortProducts">Sắp xếp sản phẩm</label>
             <select id="sortProducts" class="sort-select" name="sort" onchange="this.form.submit()">
                 <option value="featured" @selected($sort === 'featured')>Sắp xếp: Nổi bật</option>

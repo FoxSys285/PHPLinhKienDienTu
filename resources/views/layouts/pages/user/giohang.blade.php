@@ -24,6 +24,12 @@
         @if (session('checkout_error'))
             <div class="alert alert-warning" role="alert">{{ session('checkout_error') }}</div>
         @endif
+        @if (session('cart_status'))
+            <div class="alert alert-success" role="status">{{ session('cart_status') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="alert alert-danger" role="alert">{{ $errors->first() }}</div>
+        @endif
 
         @if (count($cartItems) === 0)
             <div class="empty-cart">
@@ -33,7 +39,7 @@
                 <a class="button-primary" href="{{ route('products.index') }}">Khám phá sản phẩm <span aria-hidden="true">→</span></a>
             </div>
         @else
-            <form action="{{ url('/gio-hang') }}" method="post" id="checkoutForm">
+            <form action="{{ route('cart.update') }}" method="post" id="checkoutForm">
                 @csrf
                 <div class="cart-layout">
                     <section class="cart-items-panel" aria-label="Sản phẩm trong giỏ">
@@ -49,7 +55,7 @@
                                 @php($productId = data_get($product, 'id'))
                                 <article class="cart-item" data-unit="{{ $unitPrice }}">
                                     <label class="cart-item-select" aria-label="Chọn {{ data_get($product, 'name') }}">
-                                        <input type="checkbox" name="selected[]" value="{{ $productId }}" class="select-item">
+                                        <input type="checkbox" name="selected[]" value="{{ $productId }}" class="select-item" checked>
                                     </label>
                                     <a class="cart-product-image" href="{{ route('products.show', $productId) }}"><img src="{{ data_get($product, 'image') }}" alt="{{ data_get($product, 'name') }}"></a>
                                     <div class="cart-product-info">
@@ -60,13 +66,14 @@
                                     </div>
                                     <div class="cart-unit-price"><span>Đơn giá</span><strong>{{ data_get($product, 'formatted_price', number_format($unitPrice, 0, ',', '.') . '₫') }}</strong></div>
                                     <label class="cart-quantity-label">Số lượng
-                                        <input type="number" name="quantities[{{ $productId }}]" value="{{ $quantity }}" min="1" max="99" class="cart-qty-input" aria-label="Số lượng {{ data_get($product, 'name') }}">
+                                        <input type="number" name="quantities[{{ $productId }}]" value="{{ $quantity }}" min="1" max="{{ min(99, (int) data_get($product, 'stock', 99)) }}" class="cart-qty-input" aria-label="Số lượng {{ data_get($product, 'name') }}">
                                     </label>
                                     <div class="cart-line-total"><span>Tạm tính</span><strong class="cart-subtotal">{{ number_format($unitPrice * $quantity, 0, ',', '.') }}₫</strong></div>
-                                    <button type="submit" name="remove" value="{{ $productId }}" class="cart-remove" aria-label="Xóa {{ data_get($product, 'name') }} khỏi giỏ">Xóa</button>
+                                    <button type="submit" formaction="{{ route('cart.remove') }}" name="product_id" value="{{ $productId }}" class="cart-remove" aria-label="Xóa {{ data_get($product, 'name') }} khỏi giỏ">Xóa</button>
                                 </article>
                             @endforeach
                         </div>
+                        <button class="button-outline cart-update-button" type="submit">Cập nhật giỏ hàng</button>
                         <a class="cart-continue-link" href="{{ route('products.index') }}"><span aria-hidden="true">←</span> Tiếp tục mua sắm</a>
                     </section>
 
@@ -78,7 +85,7 @@
                             <div class="summary-row"><span>Tạm tính</span><strong id="grandTotal">0₫</strong></div>
                             <div class="summary-row"><span>Phí giao hàng</span><span class="summary-muted">Tính ở bước tiếp theo</span></div>
                             <div class="summary-total"><span>Tổng tiền</span><strong id="selectedTotal">0₫</strong></div>
-                            <button class="button-primary cart-checkout-button" type="submit" formaction="{{ url('/thanh-toan') }}">Tiến hành thanh toán <span aria-hidden="true">→</span></button>
+                            <button class="button-primary cart-checkout-button" type="submit" formaction="{{ route('checkout.start') }}">Tiến hành thanh toán <span aria-hidden="true">→</span></button>
                             <p class="cart-safe-note"><span aria-hidden="true">✓</span> Thông tin đơn hàng được xác nhận trước khi đặt</p>
                         </div>
                         <div class="cart-help"><span aria-hidden="true">✦</span><div><strong>Cần tư vấn linh kiện?</strong><a href="tel:19006868">Gọi 1900 6868</a></div></div>
