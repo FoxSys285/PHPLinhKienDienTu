@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['user_id', 'coupon_id', 'order_number', 'status', 'payment_method', 'payment_status', 'customer_name', 'customer_email', 'customer_phone', 'shipping_address', 'shipping_city', 'company_name', 'tax_number', 'subtotal', 'discount_total', 'shipping_total', 'vat_total', 'total', 'customer_note', 'reserved_until', 'confirmed_at', 'cancellation_reason', 'cancelled_by', 'cancelled_at', 'stock_deducted_at', 'shipment_status', 'shipment_service', 'shipment_number', 'shipment_tracking_url', 'estimated_delivery_at', 'shipment_handed_over_at', 'delivered_at', 'shipment_updated_at', 'cod_status', 'cod_collected_at', 'cod_reconciled_at', 'refund_status', 'refund_reference', 'refunded_at', 'guest_access_token'])]
+#[Fillable(['user_id', 'coupon_id', 'coupon_code', 'coupon_title', 'order_number', 'status', 'payment_method', 'payment_status', 'customer_name', 'customer_email', 'customer_phone', 'shipping_address', 'shipping_city', 'company_name', 'tax_number', 'subtotal', 'discount_total', 'shipping_total', 'vat_total', 'total', 'customer_note', 'reserved_until', 'confirmed_at', 'cancellation_reason', 'cancelled_by', 'cancelled_at', 'stock_deducted_at', 'shipment_status', 'shipment_service', 'shipment_number', 'shipment_tracking_url', 'estimated_delivery_at', 'shipment_handed_over_at', 'delivered_at', 'shipment_updated_at', 'cod_status', 'cod_collected_at', 'cod_reconciled_at', 'refund_status', 'refund_reference', 'refunded_at', 'guest_access_token'])]
 class Order extends Model
 {
     public function getRouteKeyName(): string

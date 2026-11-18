@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\PaymentIntent;
 use App\Services\OrderService;
 use App\Services\PayOSService;
+use App\Services\PromotionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,10 +20,10 @@ use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
-    public function create(Request $request, CartController $cartController): Response|RedirectResponse
+    public function create(Request $request, CartController $cartController, PromotionService $promotions): Response|RedirectResponse
     {
         $cart = $cartController->currentCart($request);
-        $cart->load('items.product.priceTiers');
+        $cart->load('items.product.priceTiers', 'items.product.category');
 
         if ($cart->items->isEmpty()) {
             $pendingToken = $request->session()->get('payos_pending_intent_token');
@@ -34,20 +35,27 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Giỏ hàng đang trống.');
         }
 
-        $priceGroup = $request->user()?->account_type === 'business' && $request->user()->business_approved
-            ? $request->user()->price_group
-            : 'retail';
-        $subtotal = $cart->items->sum(fn ($item): float => $item->product->priceFor((int) $item->quantity, $priceGroup) * $item->quantity);
+        $quote = $promotions->quote($cart, $request->user());
         $addresses = $request->user()?->addresses()->orderByDesc('is_default')->latest()->get() ?? collect();
 
         return response()->view('checkout.create', [
             'cart' => $cart,
-            'subtotal' => $subtotal,
-            'shippingFee' => $subtotal >= (float) config('store.free_shipping_threshold') ? 0 : (float) config('store.standard_shipping_fee'),
+            'subtotal' => $quote['subtotal'],
+            'quote' => $quote,
+            'shippingFee' => $quote['shipping'],
             'user' => $request->user(),
             'addresses' => $addresses,
             'paymentDriver' => config('services.payment.driver'),
         ])->withCookie($cartController->cartCookie($cart));
+    }
+
+    public function previewPromotion(Request $request, CartController $cartController, PromotionService $promotions): JsonResponse
+    {
+        $data = $request->validate(['coupon_code' => ['nullable', 'string', 'max:60']]);
+        $cart = $cartController->currentCart($request);
+        $quote = $promotions->quote($cart, $request->user(), $data['coupon_code'] ?? null);
+
+        return response()->json(['html' => view('checkout.promotion-summary', ['quote' => $quote])->render()]);
     }
 
     public function store(Request $request, CartController $cartController, OrderService $orders, PayOSService $payOS): RedirectResponse

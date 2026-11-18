@@ -23,7 +23,7 @@
     'storefront-product' => request()->routeIs('products.show'),
     'storefront-cart' => request()->routeIs('cart.index'),
     'storefront-auth' => request()->routeIs('login', 'register', 'password.request', 'password.reset'),
-    'storefront-content' => request()->routeIs('pages.promotions', 'pages.support', 'pages.returns', 'pages.shipping', 'pages.privacy', 'pages.contact', 'account.*', 'checkout.*'),
+    'storefront-content' => request()->routeIs('promotions.show', 'pages.promotions', 'pages.support', 'pages.returns', 'pages.shipping', 'pages.privacy', 'pages.contact', 'account.*', 'checkout.*'),
 ])>
     <header data-site-header class="site-header sticky top-0 z-40 border-b border-slate-200/80 bg-white shadow-[0_2px_7px_rgba(15,35,65,.04)]">
         <div class="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2.5 sm:gap-5 lg:gap-7">
@@ -168,13 +168,23 @@
                     <nav class="site-footer-links" aria-label="Dành cho doanh nghiệp"><a href="{{ route('pages.contact') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-5 4h2"/></svg>Hỗ trợ đơn hàng số lượng lớn</a><a href="{{ route('register') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0m2-8h5m-2.5-2.5v5"/></svg>Đăng ký tài khoản doanh nghiệp</a><a href="{{ route('products.index') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>Tra cứu sản phẩm</a></nav>
                 </section>
 
-                <a href="{{ route('pages.promotions') }}" class="site-footer-promo-widget">
-                    <span class="site-footer-promo-art"><img src="{{ asset('images/footer-chip-widget-optimized.png') }}" alt="" loading="lazy" decoding="async"></span>
-                    <span class="site-footer-promo-label">Ưu đãi đặc biệt</span>
-                    <strong>Giảm đến 50%</strong>
-                    <span class="site-footer-promo-copy">Cho đơn hàng đầu tiên</span>
-                    <span class="site-footer-promo-button">Mua ngay <span aria-hidden="true">→</span></span>
-                </a>
+                @if ($footerPromotions->isNotEmpty())
+                <div class="site-footer-promotions min-w-0">
+                    @php($footerPromotion = $footerPromotions->first())
+                    <a href="{{ route('promotions.show', $footerPromotion->slug) }}" class="site-footer-promo-widget">
+                        <span class="site-footer-promo-art"><img src="{{ asset('images/footer-chip-widget-optimized.png') }}" alt="" loading="lazy" decoding="async"></span>
+                        <span class="site-footer-promo-label">{{ $footerPromotion->eyebrow }}</span>
+                        <strong>Giảm {{ $footerPromotion->discount_label }} · {{ $footerPromotion->code }}</strong>
+                        <span class="site-footer-promo-copy">Mua từ {{ number_format($footerPromotion->minimum_purchase, 0, ',', '.') }}₫</span>
+                        <span class="site-footer-promo-button">Xem điều kiện <span aria-hidden="true">→</span></span>
+                    </a>
+                    <nav class="site-footer-links mt-3" aria-label="Các chương trình ưu đãi">
+                        @foreach ($footerPromotions as $promotion)
+                            <a href="{{ route('promotions.show', $promotion->slug) }}">{{ $promotion['title'] }}</a>
+                        @endforeach
+                    </nav>
+                </div>
+                @endif
             </div>
 
             <div class="site-footer-legal flex flex-col gap-4 py-5 text-xs text-blue-100/75 lg:flex-row lg:items-center lg:justify-between">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\StockAlert;
@@ -150,13 +151,25 @@ class StorefrontController extends Controller
     /** @return array<string, mixed> */
     private function listingData(Request $request, ?Category $category = null): array
     {
-        $query = Product::query()->where('is_active', true)->with(['category', 'priceTiers']);
+        $data = $request->validate(['voucher' => ['nullable', 'string', 'max:60']]);
+        $vouchers = Coupon::query()->promoted()->available()->orderBy('sort_order')->orderBy('id')->get();
+        $voucherCode = strtoupper(trim($data['voucher'] ?? ''));
+        $voucher = $voucherCode !== '' ? $vouchers->firstWhere('code', $voucherCode) : null;
+
+        abort_if($voucherCode !== '' && $voucher === null, 404);
+
+        $query = Product::query()->where('is_active', true);
+
+        if ($voucher && ! empty($voucher->category_slugs)) {
+            $query->whereHas('category', fn (Builder $query): Builder => $query->whereIn('slug', $voucher->category_slugs));
+        }
 
         if ($category) {
             $categoryIds = $category->children()->pluck('id')->prepend($category->id);
             $query->whereIn('category_id', $categoryIds);
         }
 
+        $filterQuery = clone $query;
         $term = trim($request->string('q')->toString());
 
         if ($term !== '') {
@@ -197,13 +210,10 @@ class StorefrontController extends Controller
             default => $query->latest(),
         };
 
-        $products = $query->paginate(16)->withQueryString();
-        $filters = Product::query()->where('is_active', true)
-            ->when($category, fn (Builder $builder) => $builder->where('category_id', $category->id))
+        $products = $query->orderBy('id')->with(['category', 'priceTiers'])->paginate(16)->withQueryString();
+        $filters = (clone $filterQuery)
             ->whereNotNull('brand')->distinct()->orderBy('brand')->pluck('brand');
-        $specFilters = Product::query()
-            ->where('is_active', true)
-            ->when($category, fn (Builder $builder) => $builder->where('category_id', $category->id))
+        $specFilters = (clone $filterQuery)
             ->orderBy('id')
             ->take(500)
             ->get(['specifications'])
@@ -218,6 +228,8 @@ class StorefrontController extends Controller
             'products' => $products,
             'categories' => Category::query()->where('is_active', true)->orderBy('sort_order')->get(),
             'brands' => $filters,
+            'voucher' => $voucher,
+            'vouchers' => $vouchers,
             'specFilters' => $specFilters,
             'category' => $category,
             'term' => $term,

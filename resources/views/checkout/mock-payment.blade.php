@@ -16,6 +16,12 @@
                 <div class="sm:col-span-2"><dt class="text-xs text-slate-500">Tham chiếu demo</dt><dd class="mt-1 font-mono text-xs text-slate-700">DEMO-{{ $intent->order_code }}</dd></div>
             </dl>
 
+            @if ($intent->payload['pricing']['coupon_code'] ?? null)
+                <div class="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
+                    <strong>{{ $intent->payload['pricing']['coupon_title'] ?? 'Ưu đãi đang áp dụng' }}</strong>
+                    <p class="mt-1">{{ $intent->payload['pricing']['coupon_code'] }} · Giảm {{ number_format($intent->payload['pricing']['discount_total'], 0, ',', '.') }}₫</p>
+                </div>
+            @endif
             <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
                 Chỉ nhấn thành công để tạo đơn hàng đã thanh toán trong hệ thống. Nếu chọn thất bại, đơn hàng sẽ không được tạo và phần hàng đã giữ chỗ sẽ được giải phóng.
             </div>

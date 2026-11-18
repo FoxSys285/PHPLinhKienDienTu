@@ -21,7 +21,7 @@ use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
-    public function __construct(private AuditLogService $auditLogs) {}
+    public function __construct(private AuditLogService $auditLogs, private PromotionService $promotions) {}
 
     /** @param array<string, mixed> $data */
     public function placeOrder(Cart $cart, array $data, ?User $user): Order
@@ -63,6 +63,7 @@ class OrderService
                 $lineTotal = round($unitPrice * $quantity, 2);
                 $subtotal += $lineTotal;
                 $orderLines[] = [
+                    'category_slug' => $product->category?->slug,
                     'product' => $product,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
@@ -70,28 +71,18 @@ class OrderService
                 ];
             }
 
-            $coupon = null;
-            $discount = 0;
-            $couponCode = strtoupper(trim((string) ($data['coupon_code'] ?? '')));
-
-            if ($couponCode !== '') {
-                $coupon = Coupon::query()->where('code', $couponCode)->lockForUpdate()->first();
-                $discount = $coupon?->discountFor($subtotal) ?? 0;
-
-                if ($discount <= 0) {
-                    throw ValidationException::withMessages(['coupon_code' => 'Mã giảm giá không hợp lệ, đã hết hạn hoặc chưa đủ điều kiện.']);
-                }
-            }
-
-            $shipping = $subtotal - $discount >= (float) config('store.free_shipping_threshold')
-                ? 0
-                : (float) config('store.standard_shipping_fee');
-            $vat = round(max(0, $subtotal - $discount) * ((float) config('store.vat_rate') / 100), 2);
+            $quote = $this->promotions->select($orderLines, $data['coupon_code'] ?? null, true);
+            $coupon = $quote['coupon'];
+            $discount = $quote['discount'];
+            $shipping = $quote['shipping'];
+            $vat = $quote['vat'];
             $onlinePayment = in_array($data['payment_method'], ['vnpay', 'momo'], true);
             $order = Order::query()->create([
                 'user_id' => $user?->id,
                 'guest_access_token' => $user ? null : Str::random(64),
                 'coupon_id' => $coupon?->id,
+                'coupon_code' => $coupon?->code,
+                'coupon_title' => $coupon?->title,
                 'order_number' => 'LK'.now()->format('ymd').Str::upper(Str::random(6)),
                 'status' => $onlinePayment ? 'pending_payment' : 'pending_confirmation',
                 'payment_method' => $data['payment_method'],
@@ -213,6 +204,7 @@ class OrderService
                 $lineTotal = round($unitPrice * $quantity, 2);
                 $subtotal += $lineTotal;
                 $lines[] = [
+                    'category_slug' => $product->category?->slug,
                     'product_id' => $product->id,
                     'sku' => $product->sku,
                     'name' => $product->name,
@@ -223,23 +215,11 @@ class OrderService
                 ];
             }
 
-            $coupon = null;
-            $discount = 0.0;
-            $couponCode = strtoupper(trim((string) ($data['coupon_code'] ?? '')));
-
-            if ($couponCode !== '') {
-                $coupon = Coupon::query()->where('code', $couponCode)->lockForUpdate()->first();
-                $discount = $coupon?->discountFor($subtotal) ?? 0;
-
-                if ($discount <= 0) {
-                    throw ValidationException::withMessages(['coupon_code' => 'Mã giảm giá không hợp lệ, đã hết hạn hoặc chưa đủ điều kiện.']);
-                }
-            }
-
-            $shipping = $subtotal - $discount >= (float) config('store.free_shipping_threshold')
-                ? 0.0
-                : (float) config('store.standard_shipping_fee');
-            $vat = round(max(0, $subtotal - $discount) * ((float) config('store.vat_rate') / 100), 2);
+            $quote = $this->promotions->select($lines, $data['coupon_code'] ?? null, true);
+            $coupon = $quote['coupon'];
+            $discount = $quote['discount'];
+            $shipping = $quote['shipping'];
+            $vat = $quote['vat'];
             $total = (int) round($subtotal - $discount + $shipping + $vat);
 
             if ($total < 1) {
@@ -268,6 +248,8 @@ class OrderService
                     ],
                     'pricing' => [
                         'coupon_id' => $coupon?->id,
+                        'coupon_code' => $coupon?->code,
+                        'coupon_title' => $coupon?->title,
                         'subtotal' => $subtotal,
                         'discount_total' => $discount,
                         'shipping_total' => $shipping,
@@ -353,6 +335,8 @@ class OrderService
                 'user_id' => $intent->user_id,
                 'guest_access_token' => $intent->user_id ? null : Str::random(64),
                 'coupon_id' => $pricing['coupon_id'] ?? null,
+                'coupon_code' => $pricing['coupon_code'] ?? null,
+                'coupon_title' => $pricing['coupon_title'] ?? null,
                 'order_number' => $orderNumber,
                 'status' => 'pending_confirmation',
                 'payment_method' => 'bank_transfer',
@@ -1097,7 +1081,7 @@ class OrderService
     {
         return Product::query()
             ->whereKey($productIds)
-            ->with('priceTiers')
+            ->with(['priceTiers', 'category'])
             ->orderBy('id')
             ->lockForUpdate()
             ->get()

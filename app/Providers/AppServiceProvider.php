@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\Coupon;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as ViewInstance;
@@ -36,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $view->with('navCartCount', (int) $cartQuery->withSum('items', 'quantity')->value('items_sum_quantity'))
+                ->with('footerPromotions', Coupon::query()->promoted()->available()->orderBy('sort_order')->orderBy('id')->take(4)->get())
                 ->with('navCategories', Category::query()->where('is_active', true)->orderBy('sort_order')->take(7)->get());
         });
     }

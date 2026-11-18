@@ -8,6 +8,7 @@ use App\Models\InventoryMovement;
 use App\Models\PriceTier;
 use App\Models\Product;
 use App\Services\AuditLogService;
+use App\Services\CloudinaryService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,9 +16,12 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class ProductController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary) {}
+
     public function index(Request $request): View
     {
         $products = Product::query()
@@ -147,6 +151,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string', 'max:10000'],
             'specifications_text' => ['nullable', 'string', 'max:5000'],
             'image_url' => ['nullable', 'string', 'url:http,https', 'max:2048'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'datasheet_url' => ['nullable', 'string', 'url:http,https', 'max:2048'],
             'price' => ['required', 'numeric', 'min:0', 'max:9999999999'],
             'compare_at_price' => ['nullable', 'numeric', 'min:0'],
@@ -164,6 +169,11 @@ class ProductController extends Controller
             'tiers.*.unit_price' => ['nullable', 'numeric', 'min:0'],
             'wholesale_price' => ['nullable', 'numeric', 'min:0'],
             'education_price' => ['nullable', 'numeric', 'min:0'],
+        ], [
+            'image.image' => 'Vui lòng chọn một tệp ảnh hợp lệ.',
+            'image.mimes' => 'Ảnh sản phẩm phải có định dạng JPG, PNG hoặc WebP.',
+            'image.max' => 'Ảnh sản phẩm không được lớn hơn 5 MB.',
+            'image.uploaded' => 'Không nhận được ảnh tải lên. Vui lòng chọn lại ảnh và thử lại.',
         ]);
 
         if ($validated['moq'] % $validated['pack_size'] !== 0) {
@@ -177,6 +187,16 @@ class ProductController extends Controller
                 'stock' => 'Tồn kho không thể thấp hơn số lượng đang giữ cho đơn hàng.',
             ]);
         }
+
+        if ($request->hasFile('image')) {
+            try {
+                $validated['image_url'] = $this->cloudinary->uploadProductImage($request->file('image'));
+            } catch (RuntimeException $exception) {
+                throw ValidationException::withMessages(['image' => $exception->getMessage()]);
+            }
+        }
+
+        unset($validated['image']);
 
         return $validated + [
             'reserved_stock' => $product?->reserved_stock ?? 0,

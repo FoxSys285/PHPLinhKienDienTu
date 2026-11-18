@@ -349,9 +349,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.querySelectorAll('[data-image-url-input]').forEach((input) => {
-        const preview = document.querySelector('[data-image-preview]');
-        const emptyState = document.querySelector('[data-image-preview-empty]');
-        const errorState = document.querySelector('[data-image-preview-error]');
+        const imageField = input.closest('[data-product-image-field]');
+        const fileInput = imageField?.querySelector('[data-image-file-input]');
+        const preview = imageField?.querySelector('[data-image-preview]');
+        const emptyState = imageField?.querySelector('[data-image-preview-empty]');
+        const errorState = imageField?.querySelector('[data-image-preview-error]');
 
         if (!preview || !emptyState || !errorState) {
             return;
@@ -368,16 +370,31 @@ document.addEventListener('DOMContentLoaded', () => {
             errorState.hidden = false;
         });
 
-        input.addEventListener('input', () => {
-            const url = input.value.trim();
+        let objectUrl;
+
+        const updatePreview = () => {
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+                objectUrl = undefined;
+            }
+
+            const file = fileInput?.files?.[0];
+            input.disabled = Boolean(file);
+            objectUrl = file ? URL.createObjectURL(file) : undefined;
+            const url = objectUrl || input.value.trim();
             errorState.hidden = true;
             emptyState.hidden = Boolean(url);
             preview.hidden = !url;
 
             if (url) {
                 preview.src = url;
+            } else {
+                preview.removeAttribute('src');
             }
-        });
+        };
+
+        input.addEventListener('input', updatePreview);
+        fileInput?.addEventListener('change', updatePreview);
 
         if (preview.complete && preview.naturalWidth === 0 && preview.getAttribute('src')) {
             preview.hidden = true;
@@ -794,5 +811,115 @@ document.addEventListener('DOMContentLoaded', () => {
 
         retryButton?.addEventListener('click', initialize);
         initialize();
+    });
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const promotions = document.querySelector('[data-checkout-promotions]');
+    if (!promotions) {
+        return;
+    }
+    const input = promotions.querySelector('[name="coupon_code"]');
+    const button = promotions.querySelector('[data-apply-coupon]');
+    const error = promotions.querySelector('[data-coupon-error]');
+    const summary = promotions.querySelector('[data-promotion-summary]');
+    let requestVersion = 0;
+    const preview = async () => {
+        const version = ++requestVersion;
+        button.disabled = true;
+        error.textContent = '';
+        try {
+            const response = await fetch(promotions.dataset.previewUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({ coupon_code: input.value.trim() }),
+            });
+            const data = await response.json();
+            if (version !== requestVersion) {
+                return;
+            }
+            if (!response.ok) {
+                error.textContent = data.errors?.coupon_code?.[0] || data.message || 'Chưa thể kiểm tra ưu đãi.';
+                return;
+            }
+            summary.innerHTML = data.html;
+        } catch {
+            if (version === requestVersion) {
+                error.textContent = 'Không thể kiểm tra ưu đãi. Vui lòng thử lại.';
+            }
+        } finally {
+            if (version === requestVersion) {
+                button.disabled = false;
+            }
+        }
+    };
+    button.addEventListener('click', preview);
+    input.addEventListener('change', preview);
+    input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            preview();
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const preview = document.querySelector('[data-promotion-image-preview]');
+    if (!preview) {
+        return;
+    }
+    const upload = document.querySelector('[data-promotion-image-upload]');
+    let objectUrl;
+    document.querySelectorAll('[data-promotion-image-choice]').forEach(choice => {
+        choice.addEventListener('change', () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            upload.value = '';
+            preview.src = choice.dataset.imageUrl;
+        });
+    });
+    const selectedImage = document.querySelector('[data-promotion-image-choice]:checked');
+    if (selectedImage) {
+        preview.src = selectedImage.dataset.imageUrl;
+    }
+    upload?.addEventListener('change', () => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        if (upload.files[0]) {
+            objectUrl = URL.createObjectURL(upload.files[0]);
+            preview.src = objectUrl;
+        }
+    });
+});
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-copy-promotion-code]').forEach(button => {
+        const label = button.querySelector('[data-copy-label]');
+        const status = document.querySelector('[data-copy-status]');
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            try {
+                if (!navigator.clipboard?.writeText) {
+                    throw new Error('Clipboard unavailable');
+                }
+                await navigator.clipboard.writeText(button.dataset.copyPromotionCode);
+                label.textContent = 'Đã sao chép';
+                status.textContent = 'Đã sao chép mã ưu đãi. Bạn có thể dùng tại bước thanh toán.';
+                window.setTimeout(() => {
+                    label.textContent = 'Sao chép mã';
+                    button.disabled = false;
+                }, 2500);
+            } catch {
+                status.textContent = 'Bạn có thể chọn mã bên trên và nhấn Ctrl+C để sao chép.';
+                const code = document.querySelector('[data-promotion-code]');
+                if (code) {
+                    const range = document.createRange();
+                    range.selectNodeContents(code);
+                    const selection = window.getSelection();
+                    selection?.removeAllRanges();
+                    selection?.addRange(range);
+                }
+                button.disabled = false;
+            }
+        });
     });
 });

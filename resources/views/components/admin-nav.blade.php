@@ -3,8 +3,10 @@
         ['route' => 'admin.dashboard', 'active' => 'admin.dashboard', 'label' => 'Tổng quan', 'roles' => ['admin', 'sales', 'warehouse', 'accountant'], 'icon' => 'dashboard'],
         ['route' => 'admin.orders.index', 'active' => 'admin.orders.*', 'label' => 'Đơn hàng', 'roles' => ['admin', 'sales', 'warehouse', 'accountant'], 'icon' => 'orders'],
         ['route' => 'admin.products.index', 'active' => 'admin.products.*', 'label' => 'Sản phẩm', 'roles' => ['admin', 'sales'], 'icon' => 'products'],
+        ['route' => 'admin.promotions.index', 'active' => 'admin.promotions.*', 'label' => 'Chương trình ưu đãi', 'roles' => ['admin'], 'icon' => 'promotions'],
         ['route' => 'admin.inventory.index', 'active' => 'admin.inventory.*', 'label' => 'Kho & kiểm kê', 'roles' => ['admin', 'warehouse'], 'icon' => 'inventory'],
         ['route' => 'admin.users.index', 'active' => 'admin.users.*', 'label' => 'Khách hàng & quyền', 'roles' => ['admin'], 'icon' => 'users'],
+        ['route' => 'admin.contact-messages.index', 'active' => 'admin.contact-messages.*', 'label' => 'Yêu cầu liên hệ', 'roles' => ['admin'], 'icon' => 'messages'],
         ['route' => 'admin.audit.index', 'active' => 'admin.audit.*', 'label' => 'Nhật ký', 'roles' => ['admin'], 'icon' => 'audit'],
     ];
 @endphp
@@ -28,6 +30,9 @@
                     @case('products')
                         <path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 12 8 4 8-4M4 17l8 4 8-4"/>
                         @break
+                    @case('promotions')
+                        <path d="M3 4h9l9 9-8 8-10-9z"/><circle cx="7.5" cy="8" r="1"/><path d="m10 16 5-5"/>
+                        @break
                     @case('inventory')
                         <path d="M3 7h18v14H3zM7 7V4h10v3M7 11h10m-10 4h6"/>
                         @break
@@ -36,6 +41,9 @@
                         @break
                     @case('audit')
                         <path d="M12 3 4 6v5c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/>
+                        @break
+                    @case('messages')
+                        <path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8m-8 4h5"/>
                         @break
                 @endswitch
             </svg>

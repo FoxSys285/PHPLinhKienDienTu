@@ -80,7 +80,32 @@
                 <p class="mt-3 text-xs leading-5 text-slate-500">{{ $paymentDriver === 'mock' ? 'Đây là giao dịch demo, không thu tiền thật. Chọn kết quả thành công hoặc thất bại trên trang mô phỏng.' : 'Đơn chuyển khoản chỉ được ghi nhận đã thanh toán sau khi máy chủ nhận và xác thực webhook giao dịch từ PayOS.' }}</p>
             </section>
         </div>
-        <aside class="rounded-lg border border-slate-200 bg-white p-5 lg:sticky lg:top-32"><h2 class="text-lg font-bold text-emerald-950">Đơn hàng</h2><div class="mt-4 max-h-60 divide-y divide-slate-100 overflow-auto">@foreach($cart->items as $item)<div class="flex justify-between gap-3 py-3 text-sm"><span class="min-w-0"><strong class="block line-clamp-2">{{ $item->product->name }}</strong><span class="text-xs text-slate-500">{{ $item->product->sku }} × {{ $item->quantity }}</span></span><span class="shrink-0 font-semibold">{{ number_format($item->product->priceFor((int)$item->quantity,$checkoutPriceGroup)*$item->quantity,0,',','.') }}₫</span></div>@endforeach</div><label class="mt-4 grid gap-1.5 text-xs font-bold text-slate-600">Mã giảm giá<input name="coupon_code" value="{{ old('coupon_code') }}" placeholder="Ví dụ: MAKER10" class="rounded-lg border-slate-200 px-3 py-2.5 text-sm font-normal"></label><div class="mt-4 grid gap-3 border-t border-slate-100 pt-4 text-sm"><div class="flex justify-between"><span class="text-slate-500">Tạm tính</span><span>{{ number_format($subtotal,0,',','.') }}₫</span></div><div class="flex justify-between"><span class="text-slate-500">Phí giao hàng</span><span>{{ $shippingFee ? number_format($shippingFee,0,',','.').'₫' : 'Miễn phí' }}</span></div><div class="flex justify-between"><span class="text-slate-500">VAT</span><span>{{ config('store.vat_rate') > 0 ? 'Tính theo cấu hình' : 'Chưa áp dụng' }}</span></div><div class="flex justify-between border-t border-slate-200 pt-3 text-base font-bold text-emerald-950"><span>Tổng dự kiến</span><span>{{ number_format($subtotal+$shippingFee,0,',','.') }}₫</span></div></div><label class="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-600"><input required type="checkbox" name="privacy_accepted" value="1" class="mt-0.5 rounded border-slate-300 text-emerald-900"><span>Tôi đồng ý với <a href="{{ route('pages.privacy') }}" class="font-bold text-emerald-900 underline">chính sách bảo vệ dữ liệu</a> và xác nhận thông tin đặt hàng là chính xác.</span></label><button class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-emerald-800">Xác nhận đặt hàng <span>→</span></button><a href="{{ route('cart.index') }}" class="mt-3 block text-center text-xs font-bold text-slate-500 hover:text-emerald-900">Quay lại giỏ hàng</a></aside>
+        <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-32">
+            <h2 class="text-lg font-bold text-emerald-950">Đơn hàng</h2>
+            <div class="mt-4 max-h-60 divide-y divide-slate-100 overflow-auto">
+                @foreach ($cart->items as $item)
+                    <div class="flex justify-between gap-3 py-3 text-sm">
+                        <span class="min-w-0"><strong class="block line-clamp-2">{{ $item->product->name }}</strong><span class="text-xs text-slate-500">{{ $item->product->sku }} × {{ $item->quantity }}</span></span>
+                        <span class="shrink-0 font-semibold">{{ number_format($item->product->priceFor((int) $item->quantity, $checkoutPriceGroup) * $item->quantity, 0, ',', '.') }}₫</span>
+                    </div>
+                @endforeach
+            </div>
+            <div data-checkout-promotions data-preview-url="{{ route('checkout.promotion') }}">
+                <div class="mt-4">
+                    <label for="checkout-coupon" class="text-xs font-bold text-slate-600">Có mã ưu đãi khác?</label>
+                    <div class="mt-2 flex gap-2">
+                        <input id="checkout-coupon" name="coupon_code" value="{{ old('coupon_code') }}" maxlength="60" placeholder="Nhập mã nếu có" class="min-w-0 flex-1 rounded-lg border-slate-200 px-3 py-2.5 text-sm uppercase">
+                        <button type="button" data-apply-coupon class="rounded-lg bg-blue-600 px-3 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50">Kiểm tra</button>
+                    </div>
+                    <p data-coupon-error role="alert" class="mt-2 text-xs text-rose-600"></p>
+                    <p class="mt-2 text-[11px] text-slate-500">Để trống mã để hệ thống tự chọn ưu đãi.</p>
+                </div>
+                <div data-promotion-summary>@include('checkout.promotion-summary', ['quote' => $quote])</div>
+            </div>
+            <label class="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-600"><input required type="checkbox" name="privacy_accepted" value="1" class="mt-0.5 rounded border-slate-300 text-emerald-900"><span>Tôi đồng ý với <a href="{{ route('pages.privacy') }}" class="font-bold text-emerald-900 underline">chính sách bảo vệ dữ liệu</a> và xác nhận thông tin đặt hàng là chính xác.</span></label>
+            <button class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-emerald-800">Xác nhận đặt hàng <span>→</span></button>
+            <a href="{{ route('cart.index') }}" class="mt-3 block text-center text-xs font-bold text-slate-500 hover:text-emerald-900">Quay lại giỏ hàng</a>
+        </aside>
     </form>
 </div>
 @endsection

@@ -3,10 +3,12 @@
 use App\Http\Controllers\AccountAddressController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
+use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InventoryController as AdminInventoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\PromotionController as AdminPromotionController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -14,8 +16,10 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\MockShipmentController;
 use App\Http\Controllers\PayOSWebhookController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\ViettelPostWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -27,7 +31,8 @@ Route::get('/san-pham/{product:slug}', [StorefrontController::class, 'show'])->n
 Route::post('/san-pham/{product}/thong-bao-co-hang', [StorefrontController::class, 'restock'])->middleware('throttle:5,1')->name('products.restock');
 Route::get('/tim-kiem/goi-y', [StorefrontController::class, 'suggest'])->name('search.suggest');
 Route::get('/sitemap.xml', [StorefrontController::class, 'sitemap'])->name('sitemap');
-Route::view('/khuyen-mai', 'pages.promotions')->name('pages.promotions');
+Route::get('/khuyen-mai', [PromotionController::class, 'index'])->name('pages.promotions');
+Route::get('/khuyen-mai/{slug}', [PromotionController::class, 'show'])->name('promotions.show');
 Route::view('/ho-tro', 'pages.support')->name('pages.support');
 
 Route::get('/gio-hang', [CartController::class, 'index'])->name('cart.index');
@@ -35,6 +40,7 @@ Route::post('/gio-hang/{product}', [CartController::class, 'store'])->name('cart
 Route::patch('/gio-hang/{item}', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/gio-hang/{item}', [CartController::class, 'destroy'])->name('cart.destroy');
 
+Route::post('/thanh-toan/uu-dai', [CheckoutController::class, 'previewPromotion'])->middleware('throttle:30,1')->name('checkout.promotion');
 Route::get('/thanh-toan', [CheckoutController::class, 'create'])->name('checkout.create');
 Route::post('/thanh-toan', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('checkout.store');
 Route::get('/thanh-toan/mo-phong/{token}', [CheckoutController::class, 'showMockPayment'])->middleware('throttle:30,1')->name('checkout.mock-payment.show');
@@ -78,7 +84,8 @@ Route::post('/san-pham/{product}/danh-gia', [StorefrontController::class, 'revie
 Route::view('/chinh-sach/doi-tra', 'pages.returns')->name('pages.returns');
 Route::view('/chinh-sach/giao-hang', 'pages.shipping')->name('pages.shipping');
 Route::view('/chinh-sach/bao-mat', 'pages.privacy')->name('pages.privacy');
-Route::view('/lien-he', 'pages.contact')->name('pages.contact');
+Route::get('/lien-he', [ContactController::class, 'create'])->name('pages.contact');
+Route::post('/lien-he', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
 
 Route::prefix('quan-tri')->name('admin.')->middleware(['auth', 'staff'])->group(function (): void {
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -102,5 +109,8 @@ Route::prefix('quan-tri')->name('admin.')->middleware(['auth', 'staff'])->group(
     Route::post('/ton-kho/{product}', [AdminInventoryController::class, 'store'])->name('inventory.store')->middleware('staff:admin,warehouse');
     Route::get('/khach-hang', [AdminUserController::class, 'index'])->name('users.index')->middleware('staff:admin');
     Route::patch('/khach-hang/{user}', [AdminUserController::class, 'update'])->name('users.update')->middleware('staff:admin');
+    Route::resource('khuyen-mai', AdminPromotionController::class)->parameters(['khuyen-mai' => 'promotion'])->names('promotions')->except('show')->middleware('staff:admin');
     Route::get('/nhat-ky', [AdminAuditLogController::class, 'index'])->name('audit.index')->middleware('staff:admin');
+    Route::get('/lien-he', [AdminContactMessageController::class, 'index'])->name('contact-messages.index')->middleware('staff:admin');
+    Route::patch('/lien-he/{contactMessage}', [AdminContactMessageController::class, 'update'])->name('contact-messages.update')->middleware('staff:admin');
 });

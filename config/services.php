@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'cloudinary' => [
+        'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+        'api_key' => env('CLOUDINARY_API_KEY'),
+        'api_secret' => env('CLOUDINARY_API_SECRET'),
+        'folder' => env('CLOUDINARY_FOLDER', 'linhkien/products'),
+    ],
+
     'payos' => [
         'client_id' => env('PAYOS_CLIENT_ID'),
         'api_key' => env('PAYOS_API_KEY'),

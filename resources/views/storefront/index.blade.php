@@ -1,10 +1,36 @@
 @extends('layouts.store')
 
-@section('title', ($category?->name ? $category->name.' — ' : '').'Linh kiện điện tử')
+@section('title', ($voucher ? 'Sản phẩm áp dụng '.$voucher->code.' — ' : ($category?->name ? $category->name.' — ' : '')).'Linh kiện điện tử')
 
 @section('content')
 <div class="catalog-page mx-auto max-w-7xl px-4 pt-4 sm:pt-5">
-    <x-store-hero :hero-products="$heroProducts" />
+    @if ($voucher)
+        @php
+            $voucherRemovalQuery = request()->except('voucher', 'page', 'category');
+            $voucherRemovalUrl = ($category ? route('categories.show', $category) : route('products.index')).($voucherRemovalQuery ? '?'.http_build_query($voucherRemovalQuery) : '');
+        @endphp
+        <section aria-labelledby="voucher-filter-title" class="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 via-white to-cyan-50 p-5 shadow-sm sm:p-6">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-[10px] font-extrabold uppercase tracking-wider text-blue-600">Đang lọc theo voucher</p>
+                    <h2 id="voucher-filter-title" class="mt-2 text-lg font-extrabold text-[#142747]">{{ $voucher->title }}</h2>
+                    <div class="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                        <span class="break-all rounded-lg bg-blue-600 px-3 py-1.5 font-mono font-extrabold text-white">{{ $voucher->code }}</span>
+                        <span class="font-bold text-blue-700">Giảm {{ $voucher->discount_label }}</span>
+                        <span class="text-slate-500">· Mua từ {{ number_format($voucher->minimum_purchase, 0, ',', '.') }}₫ sản phẩm áp dụng</span>
+                        @if ($voucher->maximum_discount)<span class="text-slate-500">· Giảm tối đa {{ number_format($voucher->maximum_discount, 0, ',', '.') }}₫</span>@endif
+                    </div>
+                    <p class="mt-3 text-xs leading-6 text-slate-500">{{ empty($voucher->category_slugs) ? 'Voucher áp dụng toàn cửa hàng.' : 'Danh sách chỉ hiển thị sản phẩm thuộc các danh mục áp dụng voucher này.' }} Điều kiện giá trị mua được kiểm tra khi thanh toán.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 text-xs font-bold">
+                    <a href="{{ route('promotions.show', $voucher->slug) }}" class="rounded-full border border-blue-200 bg-white px-4 py-2 text-blue-700 hover:bg-blue-50">Chi tiết ưu đãi</a>
+                    <a href="{{ $voucherRemovalUrl }}" class="rounded-full px-3 py-2 text-slate-500 hover:bg-white hover:text-blue-700">Bỏ lọc voucher ×</a>
+                </div>
+            </div>
+        </section>
+    @else
+        <x-store-hero :hero-products="$heroProducts" />
+    @endif
 
     <div class="mt-4 grid items-start gap-3 pb-8 lg:grid-cols-[205px_minmax(0,1fr)] lg:gap-3.5">
         <aside data-guide-target="catalog-filters" class="catalog-filter-panel h-fit rounded-xl border border-[#e1e9f4] bg-white p-3.5 shadow-[0_2px_8px_rgba(15,35,65,.05)] sm:p-4">
@@ -14,12 +40,24 @@
             </div>
 
             <form method="GET" action="{{ $category ? route('categories.show', $category) : route('products.index') }}" class="grid gap-3">
+                @if (request()->filled('sort'))
+                    <input type="hidden" name="sort" value="{{ request('sort') }}">
+                @endif
                 <label class="grid gap-1 text-[11px] font-bold text-[#142747]">Từ khóa
                     <div class="relative"><input name="q" value="{{ request('q') }}" placeholder="Nhập tên sản phẩm..." class="w-full rounded-lg border border-[#d7e1ef] px-2.5 py-2 pr-8 text-xs font-normal text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"><svg viewBox="0 0 24 24" class="absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-[#142747]" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg></div>
                 </label>
 
+                <label class="grid gap-1 text-[11px] font-bold text-[#142747]">Voucher ưu đãi
+                    <select name="voucher" class="w-full rounded-lg border border-[#d7e1ef] bg-white px-2.5 py-2 text-xs font-normal text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                        <option value="">Tất cả sản phẩm</option>
+                        @foreach ($vouchers as $availableVoucher)
+                            <option value="{{ $availableVoucher->code }}" @selected($voucher?->id === $availableVoucher->id)>{{ $availableVoucher->code }} · {{ $availableVoucher->title }}</option>
+                        @endforeach
+                    </select>
+                </label>
+
                 <label class="grid gap-1 text-[11px] font-bold text-[#142747]">Danh mục
-                    <select name="category" onchange="if(this.value) window.location.href=this.value" class="w-full rounded-lg border border-[#d7e1ef] bg-white px-2.5 py-2 text-xs font-normal text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100">
+                    <select onchange="if(this.value) window.location.href=this.value" class="w-full rounded-lg border border-[#d7e1ef] bg-white px-2.5 py-2 text-xs font-normal text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100">
                         <option value="{{ route('products.index') }}{{ request()->except('page') ? '?'.http_build_query(request()->except('page')) : '' }}" @selected(! $category)>Tất cả danh mục</option>
                         @foreach($categories as $item)
                             <option value="{{ route('categories.show', $item) }}{{ request()->except('page') ? '?'.http_build_query(request()->except('page')) : '' }}" @selected($category?->id === $item->id)>{{ $item->name }}</option>
