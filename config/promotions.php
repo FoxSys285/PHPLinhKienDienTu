@@ -46,7 +46,7 @@ return [
     'du-an-so-luong' => [
         'code' => 'PROJECT8',
         'title' => 'Đặt linh kiện cho dự án',
-        'eyebrow' => 'Dự án & doanh nghiệp',
+        'eyebrow' => 'Dự án công nghệ',
         'description' => 'Đồng hành cùng những dự án lớn. Giảm 8% khi mua board, vi điều khiển và module từ 500.000₫.',
         'type' => 'percentage',
         'discount_value' => 8,

@@ -19,7 +19,6 @@
             <a href="{{ route('products.index') }}" class="cart-primary-action mt-5 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white">Khám phá sản phẩm <span aria-hidden="true">→</span></a>
         </section>
     @else
-        @php($priceGroup = auth()->user()?->account_type === 'business' && auth()->user()->business_approved ? auth()->user()->price_group : 'retail')
 
         <div class="cart-layout grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
             <section class="cart-items-panel overflow-hidden rounded-3xl border border-white/80 bg-white/50 shadow-[0_14px_36px_rgba(55,91,169,.1)] backdrop-blur-xl" aria-label="Sản phẩm trong giỏ">
@@ -53,8 +52,8 @@
                                 <button class="text-xs font-bold text-blue-700 hover:underline sm:hidden">Cập nhật</button>
                             </form>
 
-                            <div class="flex justify-between text-sm text-slate-600 sm:block sm:text-right"><span class="text-xs text-slate-500 sm:hidden">Đơn giá</span><span>{{ number_format($item->product->priceFor((int) $item->quantity, $priceGroup), 0, ',', '.') }}₫</span></div>
-                            <div class="flex justify-between text-sm font-bold text-[#102653] sm:block sm:text-right"><span class="text-xs font-semibold text-slate-500 sm:hidden">Thành tiền</span><span>{{ number_format($item->product->priceFor((int) $item->quantity, $priceGroup) * $item->quantity, 0, ',', '.') }}₫</span></div>
+                            <div class="flex justify-between text-sm text-slate-600 sm:block sm:text-right"><span class="text-xs text-slate-500 sm:hidden">Đơn giá</span><span>{{ number_format($item->product->priceFor((int) $item->quantity), 0, ',', '.') }}₫</span></div>
+                            <div class="flex justify-between text-sm font-bold text-[#102653] sm:block sm:text-right"><span class="text-xs font-semibold text-slate-500 sm:hidden">Thành tiền</span><span>{{ number_format($item->product->priceFor((int) $item->quantity) * $item->quantity, 0, ',', '.') }}₫</span></div>
 
                             <form action="{{ route('cart.destroy', $item) }}" method="POST" class="justify-self-end">
                                 @csrf

@@ -892,6 +892,108 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 document.addEventListener('DOMContentLoaded', () => {
+    const imageInput = document.querySelector('[data-review-images-input]');
+    const imagePreview = document.querySelector('[data-review-images-preview]');
+    const imageFeedback = document.querySelector('[data-review-images-feedback]');
+    const videoInput = document.querySelector('[data-review-video-input]');
+    const videoPreview = document.querySelector('[data-review-video-preview]');
+    const reviewForm = document.querySelector('[data-review-form]');
+    let imageObjectUrls = [];
+    let videoObjectUrl;
+
+    const clearImagePreviews = () => {
+        imageObjectUrls.forEach(objectUrl => URL.revokeObjectURL(objectUrl));
+        imageObjectUrls = [];
+        imagePreview?.replaceChildren();
+        imagePreview?.classList.add('hidden');
+    };
+
+    imageInput?.addEventListener('change', () => {
+        clearImagePreviews();
+
+        const selectedImages = Array.from(imageInput.files ?? []);
+
+        if (selectedImages.length > 5) {
+            imageInput.value = '';
+            imageFeedback.textContent = 'Bạn chỉ có thể chọn tối đa 5 ảnh.';
+            imageFeedback.classList.remove('hidden');
+
+            return;
+        }
+
+        if (selectedImages.length === 0) {
+            imageFeedback?.classList.add('hidden');
+
+            return;
+        }
+
+        imageFeedback.textContent = `Đã chọn ${selectedImages.length}/5 ảnh.`;
+        imageFeedback.classList.remove('hidden');
+        imagePreview.classList.remove('hidden');
+
+        selectedImages.forEach(file => {
+            const objectUrl = URL.createObjectURL(file);
+            const thumbnail = document.createElement('img');
+            const frame = document.createElement('span');
+
+            imageObjectUrls.push(objectUrl);
+            thumbnail.src = objectUrl;
+            thumbnail.alt = file.name;
+            thumbnail.className = 'aspect-square size-full rounded-md object-cover';
+            frame.className = 'overflow-hidden rounded-md ring-1 ring-slate-200';
+            frame.append(thumbnail);
+            imagePreview.append(frame);
+        });
+    });
+
+    videoInput?.addEventListener('change', () => {
+        if (!videoPreview) {
+            return;
+        }
+
+        if (videoObjectUrl) {
+            URL.revokeObjectURL(videoObjectUrl);
+            videoObjectUrl = undefined;
+        }
+
+        if (!videoInput.files?.[0]) {
+            videoPreview.pause();
+            videoPreview.removeAttribute('src');
+            videoPreview.load();
+            videoPreview.classList.add('hidden');
+
+            return;
+        }
+
+        videoObjectUrl = URL.createObjectURL(videoInput.files[0]);
+        videoPreview.src = videoObjectUrl;
+        videoPreview.classList.remove('hidden');
+    });
+
+    reviewForm?.addEventListener('reset', () => {
+        clearImagePreviews();
+        imageFeedback?.classList.add('hidden');
+
+        if (videoObjectUrl) {
+            URL.revokeObjectURL(videoObjectUrl);
+            videoObjectUrl = undefined;
+        }
+
+        videoPreview?.pause();
+        videoPreview?.removeAttribute('src');
+        videoPreview?.load();
+        videoPreview?.classList.add('hidden');
+    });
+
+    window.addEventListener('pagehide', () => {
+        clearImagePreviews();
+
+        if (videoObjectUrl) {
+            URL.revokeObjectURL(videoObjectUrl);
+        }
+    }, { once: true });
+});
+document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-copy-promotion-code]').forEach(button => {
         const label = button.querySelector('[data-copy-label]');
         const status = document.querySelector('[data-copy-status]');

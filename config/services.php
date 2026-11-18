@@ -40,6 +40,9 @@ return [
         'api_key' => env('CLOUDINARY_API_KEY'),
         'api_secret' => env('CLOUDINARY_API_SECRET'),
         'folder' => env('CLOUDINARY_FOLDER', 'linhkien/products'),
+        'promotions_folder' => env('CLOUDINARY_PROMOTIONS_FOLDER', 'linhkien/promotions'),
+        'review_images_folder' => env('CLOUDINARY_REVIEW_IMAGES_FOLDER', 'linhkien/reviews/images'),
+        'review_videos_folder' => env('CLOUDINARY_REVIEW_VIDEOS_FOLDER', 'linhkien/reviews/videos'),
     ],
 
     'payos' => [

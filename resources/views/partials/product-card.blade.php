@@ -1,5 +1,4 @@
 @php($available = $product->availableStock())
-@php($cardPriceGroup = auth()->user()?->account_type === 'business' && auth()->user()->business_approved ? auth()->user()->price_group : 'retail')
 
 <article data-product-card data-guide-target="product-card" class="product-card group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-[0_2px_8px_rgba(15,35,65,.05)] transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_8px_22px_rgba(15,35,65,.10)]">
     <a href="{{ route('products.show', $product) }}" class="flex flex-1 flex-col">
@@ -24,7 +23,7 @@
             <h2 class="line-clamp-2 min-h-10 text-[13px] font-semibold leading-5 text-[#142747] sm:text-sm">{{ $product->name }}</h2>
             <p class="mt-1 line-clamp-1 font-mono text-[10px] text-slate-400">{{ $product->sku }}</p>
             <div class="mt-auto flex items-end justify-between gap-2 pt-2.5">
-                <p class="text-sm font-extrabold text-orange-600 sm:text-base">{{ number_format($product->priceFor((int) $product->moq, $cardPriceGroup), 0, ',', '.') }}₫</p>
+                <p class="text-sm font-extrabold text-orange-600 sm:text-base">{{ number_format($product->priceFor((int) $product->moq), 0, ',', '.') }}₫</p>
                 <span class="shrink-0 text-[10px] font-medium {{ $available > 0 ? 'text-emerald-700' : 'text-slate-500' }}">{{ $available > 0 ? '✓ Còn hàng' : ($product->allow_backorder ? 'Đặt trước' : 'Tạm hết') }}</span>
             </div>
         </div>

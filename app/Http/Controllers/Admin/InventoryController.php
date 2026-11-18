@@ -4,15 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StockAvailable;
+use App\Models\Category;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\StockAlert;
 use App\Services\AuditLogService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Throwable;
@@ -21,19 +24,76 @@ class InventoryController extends Controller
 {
     public function index(Request $request): View
     {
-        $products = Product::query()
-            ->when($request->boolean('low_stock'), fn ($query) => $query->whereColumn('stock', '<=', 'minimum_stock'))
-            ->when($request->filled('q'), function ($query) use ($request): void {
-                $term = '%'.$request->string('q')->toString().'%';
-                $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('sku', 'like', $term));
-            })
-            ->withCount('inventoryMovements')
-            ->orderBy('stock')
-            ->paginate(20)
-            ->withQueryString();
-        $movements = InventoryMovement::query()->with(['product', 'user'])->latest()->take(12)->get();
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')],
+            'stock_status' => ['nullable', Rule::in(['out', 'low', 'normal'])],
+            'product_status' => ['nullable', Rule::in(['active', 'inactive'])],
+            'sort' => ['nullable', Rule::in(['stock_asc', 'stock_desc', 'name', 'updated_desc'])],
+            'activity_q' => ['nullable', 'string', 'max:120'],
+            'movement_type' => ['nullable', Rule::in(['opening', 'in', 'adjustment', 'reserve', 'out', 'release'])],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ]);
 
-        return view('admin.inventory.index', ['products' => $products, 'movements' => $movements]);
+        $productQuery = Product::query()
+            ->when(isset($filters['q']), function (Builder $query) use ($filters): void {
+                $term = '%'.$filters['q'].'%';
+                $query->where(fn (Builder $builder) => $builder
+                    ->where('name', 'like', $term)
+                    ->orWhere('sku', 'like', $term)
+                    ->orWhere('brand', 'like', $term));
+            })
+            ->when(isset($filters['category_id']), fn (Builder $query) => $query->where('category_id', $filters['category_id']))
+            ->when(isset($filters['product_status']), fn (Builder $query) => $query->where('is_active', $filters['product_status'] === 'active'))
+            ->when(($filters['stock_status'] ?? null) === 'out', fn (Builder $query) => $query->whereColumn('stock', '<=', 'reserved_stock'))
+            ->when(($filters['stock_status'] ?? null) === 'low', fn (Builder $query) => $query
+                ->whereRaw('stock > reserved_stock AND stock <= reserved_stock + minimum_stock'))
+            ->when(($filters['stock_status'] ?? null) === 'normal', fn (Builder $query) => $query
+                ->whereRaw('stock > reserved_stock + minimum_stock'))
+            ->withCount('inventoryMovements')
+            ->when(($filters['sort'] ?? 'stock_asc') === 'stock_desc', fn (Builder $query) => $query->orderByDesc('stock'))
+            ->when(($filters['sort'] ?? 'stock_asc') === 'name', fn (Builder $query) => $query->orderBy('name'))
+            ->when(($filters['sort'] ?? 'stock_asc') === 'updated_desc', fn (Builder $query) => $query->latest('updated_at'))
+            ->when(($filters['sort'] ?? 'stock_asc') === 'stock_asc', fn (Builder $query) => $query->orderBy('stock'))
+            ->orderBy('id');
+        $products = $productQuery->paginate(20, ['*'], 'products_page')
+            ->withQueryString();
+        $movementQuery = InventoryMovement::query()
+            ->with(['product', 'user'])
+            ->when(isset($filters['activity_q']), function (Builder $query) use ($filters): void {
+                $term = '%'.$filters['activity_q'].'%';
+                $query->where(function (Builder $builder) use ($term): void {
+                    $builder->where('reference', 'like', $term)
+                        ->orWhere('lot_number', 'like', $term)
+                        ->orWhere('note', 'like', $term)
+                        ->orWhereHas('product', fn (Builder $productQuery) => $productQuery->where(fn (Builder $searchQuery) => $searchQuery
+                            ->where('name', 'like', $term)
+                            ->orWhere('sku', 'like', $term)))
+                        ->orWhereHas('user', fn (Builder $userQuery) => $userQuery->where('name', 'like', $term));
+                });
+            })
+            ->when(isset($filters['movement_type']), fn (Builder $query) => $query->where('type', $filters['movement_type']))
+            ->when(isset($filters['date_from']), fn (Builder $query) => $query->whereDate('created_at', '>=', $filters['date_from']))
+            ->when(isset($filters['date_to']), fn (Builder $query) => $query->whereDate('created_at', '<=', $filters['date_to']))
+            ->latest('created_at')
+            ->orderByDesc('id');
+        $movements = $movementQuery->paginate(20, ['*'], 'movements_page')
+            ->withQueryString();
+
+        $stats = [
+            'products' => Product::query()->count(),
+            'low_stock' => Product::query()->whereRaw('stock > reserved_stock AND stock <= reserved_stock + minimum_stock')->count(),
+            'out_of_stock' => Product::query()->whereColumn('stock', '<=', 'reserved_stock')->count(),
+            'movements' => InventoryMovement::query()->count(),
+        ];
+
+        return view('admin.inventory.index', [
+            'products' => $products,
+            'movements' => $movements,
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
+            'stats' => $stats,
+        ]);
     }
 
     public function store(Request $request, Product $product, AuditLogService $auditLogs): RedirectResponse

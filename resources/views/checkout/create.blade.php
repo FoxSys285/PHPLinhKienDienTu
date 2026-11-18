@@ -13,7 +13,6 @@
         </div>
     @endif
     @php
-        $checkoutPriceGroup = $user?->account_type === 'business' && $user->business_approved ? $user->price_group : 'retail';
         $selectedAddressId = old('saved_address_id', $addresses->first()?->id);
         $selectedAddress = $addresses->firstWhere('id', $selectedAddressId);
     @endphp
@@ -64,7 +63,7 @@
                     <label class="grid gap-1.5 text-xs font-bold text-slate-600 sm:col-span-2">Ghi chú giao hàng<input name="customer_note" value="{{ old('customer_note', $selectedAddress?->note) }}" placeholder="Hướng dẫn thêm cho người giao" class="rounded-lg border-slate-200 px-3 py-3 text-sm font-normal"></label>
                 </div>
             </section>
-            <section class="rounded-lg border border-slate-200 bg-white p-5 sm:p-7"><h2 class="text-lg font-bold text-emerald-950">Thông tin xuất hóa đơn (không bắt buộc)</h2><div class="mt-5 grid gap-4 sm:grid-cols-2"><label class="grid gap-1.5 text-xs font-bold text-slate-600">Tên công ty<input name="company_name" value="{{ old('company_name',$user?->company_name) }}" class="rounded-lg border-slate-200 px-3 py-3 text-sm font-normal"></label><label class="grid gap-1.5 text-xs font-bold text-slate-600">Mã số thuế<input name="tax_number" value="{{ old('tax_number',$user?->tax_number) }}" class="rounded-lg border-slate-200 px-3 py-3 text-sm font-normal"></label></div></section>
+            <section class="rounded-lg border border-slate-200 bg-white p-5 sm:p-7"><h2 class="text-lg font-bold text-emerald-950">Thông tin xuất hóa đơn (không bắt buộc)</h2><div class="mt-5 grid gap-4 sm:grid-cols-2"><label class="grid gap-1.5 text-xs font-bold text-slate-600">Tên đơn vị<input name="company_name" value="{{ old('company_name',$user?->company_name) }}" class="rounded-lg border-slate-200 px-3 py-3 text-sm font-normal"></label><label class="grid gap-1.5 text-xs font-bold text-slate-600">Mã số thuế<input name="tax_number" value="{{ old('tax_number',$user?->tax_number) }}" class="rounded-lg border-slate-200 px-3 py-3 text-sm font-normal"></label></div></section>
             <section class="rounded-lg border border-slate-200 bg-white p-5 sm:p-7">
                 <h2 class="text-lg font-bold text-emerald-950">Phương thức thanh toán</h2>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -86,7 +85,7 @@
                 @foreach ($cart->items as $item)
                     <div class="flex justify-between gap-3 py-3 text-sm">
                         <span class="min-w-0"><strong class="block line-clamp-2">{{ $item->product->name }}</strong><span class="text-xs text-slate-500">{{ $item->product->sku }} × {{ $item->quantity }}</span></span>
-                        <span class="shrink-0 font-semibold">{{ number_format($item->product->priceFor((int) $item->quantity, $checkoutPriceGroup) * $item->quantity, 0, ',', '.') }}₫</span>
+                        <span class="shrink-0 font-semibold">{{ number_format($item->product->priceFor((int) $item->quantity) * $item->quantity, 0, ',', '.') }}₫</span>
                     </div>
                 @endforeach
             </div>

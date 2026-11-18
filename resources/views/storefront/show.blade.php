@@ -82,7 +82,7 @@
         </section>
         <section class="product-detail-card rounded-lg border border-slate-200 bg-white p-5 sm:p-6">
             <h2 class="text-lg font-semibold text-slate-900">Thông tin đặt hàng</h2>
-            <ul class="mt-3 grid gap-3 text-sm leading-6 text-slate-600"><li>Đối chiếu mã linh kiện trước khi đóng gói.</li><li>Linh kiện nhạy ESD được đóng gói chống tĩnh điện.</li><li>Liên hệ cửa hàng để được hỗ trợ với đơn hàng số lượng lớn.</li></ul>
+            <ul class="mt-3 grid gap-3 text-sm leading-6 text-slate-600"><li>Đối chiếu mã linh kiện trước khi đóng gói.</li><li>Linh kiện nhạy ESD được đóng gói chống tĩnh điện.</li><li>Liên hệ cửa hàng nếu cần hỗ trợ kiểm tra tình trạng hàng.</li></ul>
             <div class="mt-4 flex flex-wrap gap-4"><a href="{{ route('pages.shipping') }}" class="inline-block text-sm font-semibold text-emerald-900 hover:underline">Xem giao hàng và thanh toán</a><a href="{{ route('pages.contact') }}" class="inline-block text-sm font-semibold text-emerald-900 hover:underline">Liên hệ cửa hàng</a></div>
         </section>
     </div>
@@ -94,20 +94,89 @@
         </section>
     @endif
 
-    <section class="mt-10 grid gap-5 lg:grid-cols-2">
-        <div class="product-detail-card rounded-lg border border-slate-200 bg-white p-5 sm:p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Đánh giá sản phẩm</h2>
-            @forelse($reviews as $review)<article class="border-b border-slate-100 py-4 last:border-0"><div class="flex items-center justify-between gap-3"><p class="font-semibold text-slate-800">{{ $review->user?->name ?? 'Khách hàng' }}</p><span class="text-amber-500" aria-label="{{ $review->rating }} trên 5 sao">{{ str_repeat('★', $review->rating) }}{{ str_repeat('☆', 5 - $review->rating) }}</span></div><p class="mt-1 text-sm font-medium">{{ $review->title }}</p><p class="mt-1 text-sm leading-6 text-slate-600">{{ $review->body }}</p></article>@empty<p class="mt-2 text-sm text-slate-500">Chưa có đánh giá được duyệt.</p>@endforelse
+    <section class="mt-10 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+        <div class="product-detail-card rounded-2xl border border-white/80 bg-white/90 p-5 shadow-xl shadow-blue-950/5 backdrop-blur sm:p-6">
+            <div class="flex items-end justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-[.16em] text-blue-700">Cảm nhận khách hàng</p>
+                    <h2 class="mt-1 text-lg font-semibold text-slate-900">Đánh giá sản phẩm</h2>
+                </div>
+                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">Đã duyệt</span>
+            </div>
+            @forelse($reviews as $review)
+                <article class="border-b border-slate-100 py-4 last:border-0">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="font-semibold text-slate-800">{{ $review->user?->name ?? 'Khách hàng' }}</p>
+                        <span class="flex text-lg leading-none" aria-label="Đánh giá {{ number_format((float) $review->rating, 1) }} trên 5 sao">
+                            @for ($star = 1; $star <= 5; $star++)
+                                @php($starFill = max(0, min(1, (float) $review->rating - $star + 1)) * 100)
+                                <span class="relative inline-block text-slate-300" aria-hidden="true">★<span class="absolute inset-y-0 left-0 overflow-hidden text-amber-500" style="width: {{ $starFill }}%">★</span></span>
+                            @endfor
+                        </span>
+                    </div>
+                    @if ($review->body)
+                        <p class="mt-2 text-sm leading-6 text-slate-600">{{ $review->body }}</p>
+                    @endif
+                    @if ($review->images || $review->video_url)
+                        <div class="mt-3 flex flex-wrap items-start gap-3">
+                            @foreach ((array) $review->images as $imageUrl)
+                                <a href="{{ $imageUrl }}" target="_blank" rel="noreferrer">
+                                    <img src="{{ $imageUrl }}" alt="Ảnh trong đánh giá" loading="lazy" class="size-28 rounded-lg border border-slate-200 object-cover">
+                                </a>
+                            @endforeach
+                            @if ($review->video_url)
+                                <video src="{{ $review->video_url }}" controls playsinline preload="metadata" class="max-h-64 max-w-full rounded-lg bg-black"></video>
+                            @endif
+                        </div>
+                    @endif
+                </article>
+            @empty
+                <p class="mt-2 text-sm text-slate-500">Chưa có đánh giá được duyệt.</p>
+            @endforelse
         </div>
-        <div class="product-detail-card rounded-lg border border-slate-200 bg-white p-5 sm:p-6">
-            <h2 class="text-lg font-semibold text-slate-900">Gửi đánh giá</h2>
+        <div class="product-detail-card rounded-2xl border border-white/80 bg-white/90 p-5 shadow-xl shadow-blue-950/5 backdrop-blur sm:p-6">
             @auth
-                <form action="{{ route('reviews.store', $product) }}" method="POST" class="mt-4 grid gap-3">
+                <form action="{{ route('reviews.store', $product) }}" method="POST" enctype="multipart/form-data" data-review-form class="grid gap-4">
                     @csrf
-                    <label class="grid gap-1 text-xs font-semibold text-slate-600">Số sao<select name="rating" class="rounded-md border-slate-300 text-sm"><option value="5">5 — Rất tốt</option><option value="4">4 — Tốt</option><option value="3">3 — Bình thường</option><option value="2">2 — Chưa tốt</option><option value="1">1 — Không hài lòng</option></select></label>
-                    <input name="title" placeholder="Tiêu đề đánh giá" class="rounded-md border-slate-300 text-sm">
-                    <textarea name="body" rows="3" placeholder="Chia sẻ trải nghiệm sử dụng" class="rounded-md border-slate-300 text-sm"></textarea>
-                    <button class="w-fit rounded-md bg-emerald-950 px-4 py-2.5 text-sm font-semibold text-white">Gửi đánh giá</button>
+                    <div class="rounded-2xl bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-5 ring-1 ring-blue-100/70">
+                        <div class="flex items-start gap-3">
+                            <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-lg text-white shadow-md shadow-blue-600/20" aria-hidden="true">✦</span>
+                            <div>
+                                <h2 class="font-bold text-slate-900">Gửi đánh giá</h2>
+                                <p class="mt-1 text-xs leading-5 text-slate-600">Chia sẻ trải nghiệm thật để giúp khách hàng khác chọn sản phẩm phù hợp.</p>
+                            </div>
+                        </div>
+                        <fieldset class="mt-5">
+                            <legend class="text-xs font-semibold text-slate-600">Chọn số sao</legend>
+                            <div class="review-rating mt-2 flex flex-row-reverse justify-end" role="radiogroup" aria-label="Chọn mức đánh giá từ 1 đến 5 sao, mỗi nửa sao">
+                                @foreach ([5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1] as $rating)
+                                    <input id="review-rating-{{ str_replace('.', '-', (string) $rating) }}" type="radio" name="rating" value="{{ $rating }}" required @checked((float) old('rating', 0) === (float) $rating) class="peer sr-only">
+                                    <label for="review-rating-{{ str_replace('.', '-', (string) $rating) }}" aria-label="{{ $rating }} sao" class="review-rating__segment {{ $rating === 1 ? 'review-rating__segment--full' : ($rating == floor($rating) ? 'review-rating__segment--right' : 'review-rating__segment--left') }} peer-checked:text-amber-400"><span aria-hidden="true">★</span></label>
+                                @endforeach
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">Từ 1 đến 5 sao · Chọn được nửa sao</p>
+                        </fieldset>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div class="grid content-start gap-2 rounded-xl border border-dashed border-slate-300 bg-white p-3 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md">
+                            <label for="review-images-input" class="flex cursor-pointer items-center gap-2"><span class="grid size-8 place-items-center rounded-lg bg-blue-50 text-base text-blue-700" aria-hidden="true">▧</span>Thêm hình ảnh</label>
+                            <input id="review-images-input" type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp" data-review-images-input class="w-full text-xs font-normal file:mr-2 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:font-semibold file:text-blue-800">
+                            <span class="text-[11px] font-normal text-slate-500">Tối đa 5 ảnh · JPG, PNG, WebP · 4 MB/ảnh</span>
+                            <span data-review-images-feedback aria-live="polite" class="hidden text-[11px] font-semibold text-blue-700"></span>
+                            <div data-review-images-preview class="hidden grid grid-cols-5 gap-1.5"></div>
+                        </div>
+                        <div class="grid content-start gap-2 rounded-xl border border-dashed border-slate-300 bg-white p-3 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-blue-400 hover:shadow-md">
+                            <label for="review-video-input" class="flex cursor-pointer items-center gap-2"><span class="grid size-8 place-items-center rounded-lg bg-indigo-50 text-base text-indigo-700" aria-hidden="true">▷</span>Thêm video</label>
+                            <input id="review-video-input" type="file" name="video" accept="video/mp4,video/quicktime,video/webm" data-review-video-input class="w-full text-xs font-normal file:mr-2 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:font-semibold file:text-indigo-800">
+                            <span class="text-[11px] font-normal text-slate-500">Tối đa 1 video · MP4, MOV, WebM · 50 MB</span>
+                            <video data-review-video-preview controls playsinline preload="metadata" class="hidden mt-1 max-h-36 w-full rounded-lg bg-black"></video>
+                        </div>
+                    </div>
+                    <textarea name="body" rows="5" maxlength="2000" placeholder="Chia sẻ trải nghiệm sử dụng" class="rounded-xl border-slate-200 bg-slate-50/70 px-4 py-3 text-sm placeholder:text-slate-400 focus:bg-white">{{ old('body') }}</textarea>
+                    @error('images')<p class="text-xs text-rose-700">{{ $message }}</p>@enderror
+                    @error('video')<p class="text-xs text-rose-700">{{ $message }}</p>@enderror
+                    <button class="w-fit rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Gửi đánh giá</button>
                     <p class="text-xs text-slate-500">Chỉ khách đã mua và hoàn tất đơn mới được đánh giá. Nội dung cần được duyệt trước khi hiển thị.</p>
                 </form>
             @else

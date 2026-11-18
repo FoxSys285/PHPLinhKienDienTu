@@ -164,8 +164,8 @@
                 </section>
 
                 <section class="site-footer-column">
-                    <h2 class="site-footer-heading"><span class="site-footer-heading-icon"><svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Dành cho doanh nghiệp</h2>
-                    <nav class="site-footer-links" aria-label="Dành cho doanh nghiệp"><a href="{{ route('pages.contact') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m4 0h1m-6 4h1m4 0h1m-5 4h2"/></svg>Hỗ trợ đơn hàng số lượng lớn</a><a href="{{ route('register') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0m2-8h5m-2.5-2.5v5"/></svg>Đăng ký tài khoản doanh nghiệp</a><a href="{{ route('products.index') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>Tra cứu sản phẩm</a></nav>
+                    <h2 class="site-footer-heading"><span class="site-footer-heading-icon"><svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>Hỗ trợ mua hàng</h2>
+                    <nav class="site-footer-links" aria-label="Hỗ trợ mua hàng"><a href="{{ route('pages.support') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4.5 1.5c-1.2 1-2 1.5-2 3m0 3h.01"/></svg>Hướng dẫn mua hàng</a><a href="{{ route('pages.contact') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18v14H3zM3 7l9 6 9-6"/></svg>Liên hệ cửa hàng</a><a href="{{ route('pages.returns') }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13l-3-3m3 3-3 3M20 17H7l3 3m-3-3 3-3"/></svg>Đổi trả & bảo hành</a></nav>
                 </section>
 
                 @if ($footerPromotions->isNotEmpty())

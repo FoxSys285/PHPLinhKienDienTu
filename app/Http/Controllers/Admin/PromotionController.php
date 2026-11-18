@@ -7,13 +7,18 @@ use App\Http\Requests\Admin\PromotionRequest;
 use App\Models\Category;
 use App\Models\Coupon;
 use App\Services\AuditLogService;
+use App\Services\CloudinaryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class PromotionController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary) {}
+
     public function index(Request $request): View
     {
         $query = Coupon::query()->promoted();
@@ -94,7 +99,11 @@ class PromotionController extends Controller
         $data = $request->safe()->except(['image', 'image_preset']);
 
         if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('promotions', 'public');
+            try {
+                $data['image_path'] = $this->cloudinary->uploadPromotionImage($request->file('image'));
+            } catch (RuntimeException $exception) {
+                throw ValidationException::withMessages(['image' => $exception->getMessage()]);
+            }
         } elseif ($request->filled('image_preset')) {
             $preset = $request->string('image_preset')->toString();
             $data['image_path'] = match ($preset) {

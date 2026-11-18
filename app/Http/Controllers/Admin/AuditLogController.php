@@ -11,6 +11,11 @@ class AuditLogController extends Controller
 {
     public function index(Request $request): View
     {
+        $stats = [
+            'total' => ActivityLog::query()->count(),
+            'today' => ActivityLog::query()->whereDate('created_at', today())->count(),
+        ];
+
         $logs = ActivityLog::query()
             ->with('user')
             ->when($request->filled('action'), fn ($query) => $query->where('action', $request->string('action')->toString()))
@@ -18,6 +23,6 @@ class AuditLogController extends Controller
             ->paginate(40)
             ->withQueryString();
 
-        return view('admin.audit.index', ['logs' => $logs]);
+        return view('admin.audit.index', ['logs' => $logs, 'stats' => $stats]);
     }
 }

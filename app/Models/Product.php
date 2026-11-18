@@ -59,23 +59,14 @@ class Product extends Model
         return max(0, $this->stock - $this->reserved_stock);
     }
 
-    public function priceFor(int $quantity, string $priceGroup = 'retail'): float
+    public function priceFor(int $quantity): float
     {
         $tier = $this->priceTiers
-            ->where('price_group', $priceGroup)
+            ->where('price_group', 'retail')
             ->where('minimum_quantity', '<=', $quantity)
             ->filter(fn (PriceTier $priceTier): bool => $priceTier->maximum_quantity === null || $priceTier->maximum_quantity >= $quantity)
             ->sortByDesc('minimum_quantity')
             ->first();
-
-        if (! $tier && $priceGroup !== 'retail') {
-            $tier = $this->priceTiers
-                ->where('price_group', 'retail')
-                ->where('minimum_quantity', '<=', $quantity)
-                ->filter(fn (PriceTier $priceTier): bool => $priceTier->maximum_quantity === null || $priceTier->maximum_quantity >= $quantity)
-                ->sortByDesc('minimum_quantity')
-                ->first();
-        }
 
         return (float) ($tier?->unit_price ?? $this->price);
     }

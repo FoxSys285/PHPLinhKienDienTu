@@ -4,24 +4,22 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\Coupon;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
 
 class PromotionService
 {
     /** @return array{subtotal: float, coupon: ?Coupon, discount: float, shipping: float, vat: float, total: float, eligible: array<int, array{coupon: Coupon, discount: float}>} */
-    public function quote(Cart $cart, ?User $user, ?string $code = null): array
+    public function quote(Cart $cart, ?string $code = null): array
     {
         $cart->loadMissing('items.product.priceTiers', 'items.product.category');
-        $priceGroup = $user?->account_type === 'business' && $user->business_approved ? $user->price_group : 'retail';
         $lines = [];
 
         foreach ($cart->items as $item) {
             if ($item->product) {
                 $lines[] = [
                     'category_slug' => $item->product->category?->slug,
-                    'line_total' => round($item->product->priceFor((int) $item->quantity, $priceGroup) * $item->quantity, 2),
+                    'line_total' => round($item->product->priceFor((int) $item->quantity) * $item->quantity, 2),
                 ];
             }
         }

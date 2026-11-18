@@ -13,25 +13,29 @@ class UserController extends Controller
 {
     public function index(Request $request): View
     {
+        $stats = [
+            'total' => User::query()->count(),
+            'customers' => User::query()->where('role', 'customer')->count(),
+            'staff' => User::query()->whereIn('role', ['admin', 'sales', 'warehouse', 'accountant'])->count(),
+            'administrators' => User::query()->where('role', 'admin')->count(),
+        ];
+
         $users = User::query()
             ->when($request->filled('q'), function ($query) use ($request): void {
                 $term = '%'.$request->string('q')->toString().'%';
-                $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('email', 'like', $term)->orWhere('company_name', 'like', $term));
+                $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('email', 'like', $term));
             })
-            ->when($request->filled('type'), fn ($query) => $query->where('account_type', $request->string('type')->toString()))
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.users.index', ['users' => $users]);
+        return view('admin.users.index', ['users' => $users, 'stats' => $stats]);
     }
 
     public function update(Request $request, User $user, AuditLogService $auditLogs): RedirectResponse
     {
         $data = $request->validate([
             'role' => ['sometimes', 'required', 'in:customer,admin,sales,warehouse,accountant'],
-            'business_approved' => ['nullable', 'boolean'],
-            'price_group' => ['required', 'in:retail,wholesale,education'],
         ]);
 
         $role = $data['role'] ?? $user->role;
@@ -40,14 +44,10 @@ class UserController extends Controller
             return back()->withErrors(['role' => 'Không thể tự xóa quyền quản trị của tài khoản đang đăng nhập.']);
         }
 
-        $oldValues = $user->only(['role', 'business_approved', 'price_group']);
-        $user->update([
-            'role' => $role,
-            'business_approved' => $request->boolean('business_approved'),
-            'price_group' => $data['price_group'],
-        ]);
-        $auditLogs->record('user.permissions_updated', $user, $oldValues, $user->only(['role', 'business_approved', 'price_group']), $request->user());
+        $oldValues = $user->only(['role']);
+        $user->update(['role' => $role]);
+        $auditLogs->record('user.permissions_updated', $user, $oldValues, $user->only(['role']), $request->user());
 
-        return back()->with('success', 'Vai trò và quyền lợi tài khoản đã được cập nhật.');
+        return back()->with('success', 'Vai trò tài khoản đã được cập nhật.');
     }
 }

@@ -68,6 +68,47 @@
     color: #64748b;
 }
 
+.review-rating .review-rating__segment {
+    position: relative;
+    display: block;
+    width: 1rem;
+    height: 2rem;
+    overflow: hidden;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 2rem;
+    line-height: 2rem;
+    transition: color 150ms ease;
+}
+
+.review-rating .review-rating__segment--full {
+    width: 2rem;
+}
+
+.review-rating .review-rating__segment span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2rem;
+    white-space: nowrap;
+}
+
+.review-rating .review-rating__segment--right span {
+    left: -1rem;
+}
+
+.review-rating .review-rating__segment:hover,
+.review-rating .review-rating__segment:hover ~ .review-rating__segment,
+.review-rating input:checked ~ .review-rating__segment {
+    color: #e79a18;
+}
+
+.review-rating input:focus-visible + .review-rating__segment {
+    border-radius: 0.25rem;
+    outline: 2px solid #183652;
+    outline-offset: 3px;
+}
+
 :where(
     input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='submit']):not([type='reset']):not([type='button']):not([type='search']):focus,
     select:focus,
@@ -726,18 +767,6 @@ body.storefront-auth .auth-page textarea:focus {
 body.storefront-auth .auth-page input[type='checkbox'],
 body.storefront-auth .auth-page input[type='radio'] {
     accent-color: #3159ef;
-}
-
-body.storefront-auth .auth-page .auth-account-type-card {
-    border-color: rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.46);
-    transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
-}
-
-body.storefront-auth .auth-page .auth-account-type-card:has(input:checked) {
-    border-color: rgba(59, 130, 246, 0.62);
-    background: rgba(226, 238, 255, 0.7);
-    box-shadow: 0 6px 16px rgba(55, 91, 169, 0.09);
 }
 
 body.storefront-auth .auth-primary-action {

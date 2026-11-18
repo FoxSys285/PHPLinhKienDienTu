@@ -81,6 +81,10 @@ class Coupon extends Model
     {
         $path = $this->image_path ?: 'images/promotions/maker.png';
 
+        if (filter_var($path, FILTER_VALIDATE_URL) && parse_url($path, PHP_URL_SCHEME) === 'https') {
+            return $path;
+        }
+
         return str_starts_with($path, 'promotions/')
             ? Storage::disk('public')->url($path)
             : asset($path);

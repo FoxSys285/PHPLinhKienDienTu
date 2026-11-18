@@ -17,6 +17,13 @@ class OrderController extends Controller
 {
     public function index(Request $request): View
     {
+        $stats = [
+            'total' => Order::query()->count(),
+            'needs_attention' => Order::query()->whereIn('status', ['pending_confirmation', 'pending_payment'])->count(),
+            'in_fulfillment' => Order::query()->whereIn('status', ['confirmed', 'preparing', 'awaiting_pickup', 'handed_over', 'in_transit', 'out_for_delivery', 'shipped'])->count(),
+            'completed' => Order::query()->where('status', 'completed')->count(),
+        ];
+
         $orders = Order::query()
             ->withCount('items')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')->toString()))
@@ -28,7 +35,7 @@ class OrderController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.orders.index', ['orders' => $orders]);
+        return view('admin.orders.index', ['orders' => $orders, 'stats' => $stats]);
     }
 
     public function show(Order $order): View

@@ -14,6 +14,21 @@ class CloudinaryService
         return $this->uploadImage($image);
     }
 
+    public function uploadPromotionImage(UploadedFile $image): string
+    {
+        return $this->uploadAsset($image, 'image', (string) config('services.cloudinary.promotions_folder'));
+    }
+
+    public function uploadReviewImage(UploadedFile $image): string
+    {
+        return $this->uploadAsset($image, 'image', (string) config('services.cloudinary.review_images_folder'));
+    }
+
+    public function uploadReviewVideo(UploadedFile $video): string
+    {
+        return $this->uploadAsset($video, 'video', (string) config('services.cloudinary.review_videos_folder'));
+    }
+
     public function importProductImage(string $imageUrl): string
     {
         if (! filter_var($imageUrl, FILTER_VALIDATE_URL) || ! in_array(parse_url($imageUrl, PHP_URL_SCHEME), ['http', 'https'], true)) {
@@ -29,6 +44,17 @@ class CloudinaryService
     /** @param array{public_id?: string, overwrite?: string} $options */
     private function uploadImage(UploadedFile|string $image, array $options = []): string
     {
+        return $this->uploadAsset(
+            $image,
+            'image',
+            (string) config('services.cloudinary.folder'),
+            $options,
+        );
+    }
+
+    /** @param array{public_id?: string, overwrite?: string} $options */
+    private function uploadAsset(UploadedFile|string $file, string $resourceType, string $folder, array $options = []): string
+    {
         $cloudName = (string) config('services.cloudinary.cloud_name');
         $apiKey = (string) config('services.cloudinary.api_key');
         $apiSecret = (string) config('services.cloudinary.api_secret');
@@ -38,7 +64,7 @@ class CloudinaryService
         }
 
         $parameters = [...$options, 'timestamp' => (string) now()->timestamp];
-        $folder = trim((string) config('services.cloudinary.folder'), '/');
+        $folder = trim($folder, '/');
 
         if ($folder !== '') {
             $parameters['folder'] = $folder;
@@ -54,30 +80,32 @@ class CloudinaryService
         try {
             $request = Http::acceptJson()
                 ->connectTimeout(5)
-                ->timeout(30);
+                ->timeout($resourceType === 'video' ? 120 : 30);
 
-            if ($image instanceof UploadedFile) {
-                $request->attach('file', $image->getContent(), $image->hashName(), ['Content-Type' => $image->getMimeType()]);
+            if ($file instanceof UploadedFile) {
+                $request->attach('file', $file->getContent(), $file->hashName(), ['Content-Type' => $file->getMimeType()]);
             } else {
                 $request->asForm();
             }
 
-            $response = $request->post('https://api.cloudinary.com/v1_1/'.rawurlencode($cloudName).'/image/upload', [
+            $response = $request->post('https://api.cloudinary.com/v1_1/'.rawurlencode($cloudName).'/'.$resourceType.'/upload', [
                 ...$parameters,
                 'api_key' => $apiKey,
                 'signature' => hash('sha256', $signatureData.$apiSecret),
-                ...(is_string($image) ? ['file' => $image] : []),
+                ...(is_string($file) ? ['file' => $file] : []),
             ]);
         } catch (ConnectionException) {
-            throw new RuntimeException('Không thể kết nối Cloudinary. Vui lòng chọn lại ảnh và thử lại sau.');
+            throw new RuntimeException('Không thể kết nối Cloudinary. Vui lòng thử lại sau.');
         }
 
-        $imageUrl = $response->json('secure_url');
+        $assetUrl = $response->json('secure_url');
 
-        if (! $response->successful() || ! is_string($imageUrl) || ! filter_var($imageUrl, FILTER_VALIDATE_URL) || parse_url($imageUrl, PHP_URL_SCHEME) !== 'https') {
-            throw new RuntimeException('Không tải được ảnh lên Cloudinary. Vui lòng chọn lại ảnh và thử lại.');
+        if (! $response->successful() || ! is_string($assetUrl) || ! filter_var($assetUrl, FILTER_VALIDATE_URL) || parse_url($assetUrl, PHP_URL_SCHEME) !== 'https') {
+            $mediaLabel = $resourceType === 'video' ? 'video' : 'ảnh';
+
+            throw new RuntimeException('Không tải được '.$mediaLabel.' lên Cloudinary. Vui lòng thử lại.');
         }
 
-        return $imageUrl;
+        return $assetUrl;
     }
 }

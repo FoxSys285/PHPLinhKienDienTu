@@ -11,10 +11,28 @@ use Illuminate\View\View;
 
 class ContactMessageController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $stats = [
+            'total' => ContactMessage::query()->count(),
+            'new' => ContactMessage::query()->where('status', 'new')->count(),
+            'in_progress' => ContactMessage::query()->where('status', 'in_progress')->count(),
+            'resolved' => ContactMessage::query()->where('status', 'resolved')->count(),
+        ];
+
+        $messages = ContactMessage::query()
+            ->when($request->filled('q'), function ($query) use ($request): void {
+                $term = '%'.$request->string('q')->toString().'%';
+                $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('email', 'like', $term)->orWhere('subject', 'like', $term)->orWhere('message', 'like', $term));
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')->toString()))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
         return view('admin.contact-messages.index', [
-            'messages' => ContactMessage::query()->latest()->paginate(20),
+            'messages' => $messages,
+            'stats' => $stats,
         ]);
     }
 

@@ -34,9 +34,6 @@ class OrderService
             }
 
             $products = $this->lockedProductsFor($cartItems->pluck('product_id')->all());
-            $priceGroup = $user?->account_type === 'business' && $user->business_approved
-                ? $user->price_group
-                : 'retail';
             $subtotal = 0;
             $orderLines = [];
 
@@ -59,7 +56,7 @@ class OrderService
                     throw ValidationException::withMessages(['cart' => "{$product->name} hiện không đủ tồn kho."]);
                 }
 
-                $unitPrice = $product->priceFor($quantity, $priceGroup);
+                $unitPrice = $product->priceFor($quantity);
                 $lineTotal = round($unitPrice * $quantity, 2);
                 $subtotal += $lineTotal;
                 $orderLines[] = [
@@ -175,9 +172,6 @@ class OrderService
             }
 
             $products = $this->lockedProductsFor($cartItems->pluck('product_id')->all());
-            $priceGroup = $user?->account_type === 'business' && $user->business_approved
-                ? $user->price_group
-                : 'retail';
             $subtotal = 0.0;
             $lines = [];
 
@@ -200,7 +194,7 @@ class OrderService
                     throw ValidationException::withMessages(['cart' => "{$product->name} hiện không đủ tồn kho."]);
                 }
 
-                $unitPrice = $product->priceFor($quantity, $priceGroup);
+                $unitPrice = $product->priceFor($quantity);
                 $lineTotal = round($unitPrice * $quantity, 2);
                 $subtotal += $lineTotal;
                 $lines[] = [

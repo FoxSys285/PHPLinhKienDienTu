@@ -25,8 +25,8 @@
                             <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
                         </span>
                         <div>
-                            <h2 class="font-bold text-[#10283e]">Thông tin cá nhân</h2>
-                            <p class="mt-1 text-xs text-slate-500">Thông tin dùng để liên hệ và xác nhận đơn hàng.</p>
+                            <h2 class="font-bold text-[#10283e]">Thông tin tài khoản</h2>
+                            <p class="mt-1 text-xs text-slate-500">Thông tin liên hệ và dữ liệu xuất hóa đơn tùy chọn.</p>
                         </div>
                     </div>
 
@@ -47,11 +47,11 @@
                             <input name="phone" value="{{ old('phone', $user->phone) }}" required autocomplete="tel" class="rounded-xl px-3 py-3 text-sm font-normal">
                         </label>
                         <label class="grid gap-1.5 text-xs font-bold text-slate-600 sm:col-span-2">
-                            Tên công ty
+                            Tên đơn vị xuất hóa đơn (không bắt buộc)
                             <input name="company_name" value="{{ old('company_name', $user->company_name) }}" autocomplete="organization" class="rounded-xl px-3 py-3 text-sm font-normal">
                         </label>
                         <label class="grid gap-1.5 text-xs font-bold text-slate-600 sm:col-span-2">
-                            Mã số thuế
+                            Mã số thuế (không bắt buộc)
                             <input name="tax_number" value="{{ old('tax_number', $user->tax_number) }}" class="rounded-xl px-3 py-3 text-sm font-normal">
                         </label>
                         <button class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#10283e] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#183f63] sm:col-span-2">

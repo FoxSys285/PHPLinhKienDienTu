@@ -1,5 +1,73 @@
 @extends('layouts.admin')
-@section('title','Tài khoản & phân quyền')
+@section('title', 'Tài khoản & phân quyền')
 @section('content')
-<div class="mx-auto max-w-7xl px-4 py-9"><div class="mb-6"><p class="text-xs font-bold uppercase tracking-[.18em] text-emerald-700">Tài khoản</p><h1 class="mt-2 text-3xl font-black text-emerald-950">Khách hàng & phân quyền</h1><p class="mt-1 text-sm text-slate-500">Duyệt hồ sơ B2B, gán nhóm giá và quản lý vai trò nội bộ.</p></div><section class="overflow-hidden rounded-2xl border border-slate-200 bg-white"><form method="GET" class="grid gap-2 border-b border-slate-100 p-4 sm:grid-cols-[1fr_200px_auto]"><input name="q" value="{{ request('q') }}" placeholder="Tên, email, công ty..." class="rounded-xl border-slate-200 text-sm"><select name="type" class="rounded-xl border-slate-200 text-sm"><option value="">Mọi tài khoản</option><option value="individual" @selected(request('type')==='individual')>Cá nhân</option><option value="business" @selected(request('type')==='business')>Doanh nghiệp</option></select><button class="rounded-xl bg-emerald-950 px-4 text-sm font-bold text-white">Lọc</button></form><div class="divide-y divide-slate-100">@forelse($users as $user)<article class="grid gap-4 p-4 lg:grid-cols-[1fr_1.3fr] lg:items-center"><div><div class="flex items-center gap-3"><span class="grid size-10 place-items-center rounded-xl bg-emerald-50 font-black text-emerald-950">{{ mb_strtoupper(mb_substr($user->name,0,1)) }}</span><span><strong class="block text-sm">{{ $user->name }}</strong><span class="text-xs text-slate-500">{{ $user->email }} · {{ $user->phone }}</span></span></div><p class="mt-2 text-xs text-slate-600">{{ $user->account_type==='business'?'🏢 '.($user->company_name ?: 'Doanh nghiệp chưa khai báo'):'Khách hàng cá nhân' }} @if($user->tax_number)· MST {{ $user->tax_number }}@endif</p></div><form method="POST" action="{{ route('admin.users.update',$user) }}" class="grid gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-3">@csrf @method('PATCH')<label class="grid gap-1 text-[10px] font-bold text-slate-500">Vai trò<select name="role" class="rounded-lg border-slate-200 bg-white text-xs" @disabled($user->id===auth()->id())>@foreach(['customer'=>'Khách hàng','admin'=>'Quản trị','sales'=>'Kinh doanh','warehouse'=>'Kho','accountant'=>'Kế toán'] as $value=>$label)<option value="{{ $value }}" @selected($user->role===$value)>{{ $label }}</option>@endforeach</select></label><label class="grid gap-1 text-[10px] font-bold text-slate-500">Nhóm giá<select name="price_group" class="rounded-lg border-slate-200 bg-white text-xs"><option value="retail" @selected($user->price_group==='retail')>Bán lẻ</option><option value="wholesale" @selected($user->price_group==='wholesale')>Đại lý / bán sỉ</option><option value="education" @selected($user->price_group==='education')>Giá trường học</option></select></label><div class="flex items-end justify-between gap-2"><label class="flex items-center gap-2 pb-2 text-[10px] font-bold text-slate-600"><input type="checkbox" name="business_approved" value="1" @checked($user->business_approved) @disabled($user->account_type!=='business') class="rounded text-emerald-900"> B2B đã duyệt</label><button class="rounded-lg bg-emerald-950 px-3 py-2 text-[10px] font-bold text-white">Lưu</button></div></form></article>@empty<div class="grid justify-items-center gap-2 px-4 py-12 text-center"><strong class="text-sm text-slate-700">Không tìm thấy tài khoản phù hợp</strong><p class="text-xs text-slate-500">Thử tìm theo tên hoặc email, hoặc đặt lại bộ lọc.</p><a href="{{ route('admin.users.index') }}" class="font-bold text-blue-800 hover:underline">Xóa bộ lọc</a></div>@endforelse</div><div class="border-t border-slate-100 p-4">{{ $users->links() }}</div></section></div>
+@php
+    $roleLabels = [
+        'customer' => 'Khách hàng',
+        'admin' => 'Quản trị viên',
+        'sales' => 'Kinh doanh',
+        'warehouse' => 'Kho vận',
+        'accountant' => 'Kế toán',
+    ];
+    $summaryCards = [
+        ['label' => 'Tổng tài khoản', 'value' => $stats['total'], 'note' => 'Khách hàng và nhân sự', 'tone' => 'text-blue-700', 'icon' => 'TK'],
+        ['label' => 'Khách hàng', 'value' => $stats['customers'], 'note' => 'Có thể mua hàng và theo dõi đơn', 'tone' => 'text-violet-600', 'icon' => 'KH'],
+        ['label' => 'Nhân sự nội bộ', 'value' => $stats['staff'], 'note' => 'Có quyền vận hành cửa hàng', 'tone' => 'text-emerald-600', 'icon' => 'NV'],
+        ['label' => 'Quản trị viên', 'value' => $stats['administrators'], 'note' => 'Quản lý quyền hệ thống', 'tone' => 'text-amber-600', 'icon' => 'AD'],
+    ];
+@endphp
+
+<div class="mx-auto max-w-screen-2xl">
+    <div class="mb-7">
+        <p class="text-xs font-bold uppercase tracking-[.18em] text-blue-600">Tài khoản & chăm sóc khách hàng</p>
+        <h1 class="mt-2 text-3xl font-extrabold tracking-tight text-[#172554] sm:text-4xl">Khách hàng & phân quyền</h1>
+        <p class="mt-2 text-sm text-slate-500">Quản lý tài khoản, phân công vai trò và kiểm soát quyền truy cập nội bộ.</p>
+    </div>
+
+    <div class="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        @foreach ($summaryCards as $card)
+            <div class="group relative overflow-hidden rounded-2xl border border-white/80 bg-white/75 p-5 shadow-[0_14px_36px_-28px_rgba(23,37,84,.4)] backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg">
+                <span class="absolute -right-5 -top-7 size-24 rounded-full bg-blue-50/80 transition group-hover:scale-125"></span>
+                <div class="relative flex items-start justify-between gap-3"><div><p class="text-xs font-semibold text-slate-500">{{ $card['label'] }}</p><p class="mt-3 text-3xl font-extrabold tracking-tight {{ $card['tone'] }}">{{ number_format($card['value']) }}</p><p class="mt-1 text-[11px] text-slate-400">{{ $card['note'] }}</p></div><span class="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-xs font-black text-blue-700">{{ $card['icon'] }}</span></div>
+            </div>
+        @endforeach
+    </div>
+
+    <section class="overflow-hidden rounded-2xl border border-white/80 bg-white/80 shadow-sm">
+        <form method="GET" class="flex flex-wrap items-center gap-3 border-b border-slate-100 p-4">
+            <label class="min-w-48 flex-1"><span class="sr-only">Tìm tài khoản</span><input name="q" value="{{ request('q') }}" placeholder="Tìm theo tên hoặc email..." class="w-full rounded-xl border-slate-200 px-4 py-2.5 text-sm"></label>
+            <span class="mr-1 text-xs text-slate-400">{{ number_format($users->total()) }} tài khoản</span>
+            <button class="rounded-xl bg-[#172554] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-900">Tìm tài khoản</button>
+            @if (request()->filled('q'))<a href="{{ route('admin.users.index') }}" class="px-2 text-xs font-semibold text-slate-500 hover:text-blue-700">Đặt lại</a>@endif
+        </form>
+        <div class="divide-y divide-slate-100">
+            @forelse ($users as $user)
+                <article class="grid gap-5 p-5 transition hover:bg-blue-50/20 xl:grid-cols-[minmax(260px,.9fr)_minmax(300px,.8fr)] xl:items-center">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-3">
+                            <span class="grid size-12 shrink-0 place-items-center rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-100 text-sm font-black text-[#172554]">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                            <div class="min-w-0"><strong class="block truncate text-sm font-extrabold text-[#172554]">{{ $user->name }}</strong><span class="mt-1 block truncate text-xs text-slate-500">{{ $user->email }}</span>@if ($user->phone)<span class="mt-0.5 block text-[11px] text-slate-400">{{ $user->phone }}</span>@endif</div>
+                        </div>
+                        <div class="mt-3 flex flex-wrap items-center gap-2"><span @class(['rounded-full px-2.5 py-1 text-[10px] font-bold', 'bg-blue-50 text-blue-700' => $user->role === 'customer', 'bg-violet-50 text-violet-700' => $user->role === 'admin', 'bg-slate-100 text-slate-600' => ! in_array($user->role, ['customer', 'admin'], true)])>{{ $roleLabels[$user->role] ?? $user->role }}</span><span class="text-[10px] text-slate-400">Tham gia {{ $user->created_at->format('d/m/Y') }}</span></div>
+                    </div>
+
+                    <form method="POST" action="{{ route('admin.users.update', $user) }}" class="grid gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 sm:grid-cols-[minmax(180px,1fr)_auto] sm:items-end">
+                        @csrf
+                        @method('PATCH')
+                        <label class="grid gap-1.5 text-[11px] font-bold text-slate-500">Vai trò truy cập
+                            <select name="role" class="rounded-xl border-slate-200 bg-white text-xs" @disabled($user->id === auth()->id())>
+                                @foreach ($roleLabels as $value => $label)<option value="{{ $value }}" @selected($user->role === $value)>{{ $label }}</option>@endforeach
+                            </select>
+                            @if ($user->id === auth()->id())<span class="text-[10px] font-medium text-slate-400">Không thể tự đổi vai trò tài khoản đang đăng nhập.</span>@endif
+                        </label>
+                        <button class="rounded-xl bg-[#172554] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-900">Lưu vai trò</button>
+                    </form>
+                </article>
+            @empty
+                <div class="px-6 py-16 text-center"><span class="mx-auto grid size-12 place-items-center rounded-2xl bg-blue-50 text-xl text-blue-600">⌕</span><strong class="mt-4 block text-sm text-[#172554]">Không tìm thấy tài khoản phù hợp</strong><p class="mt-1 text-xs text-slate-500">Thử tìm theo tên hoặc email.</p><a href="{{ route('admin.users.index') }}" class="mt-3 inline-flex text-xs font-bold text-blue-700 hover:underline">Xóa bộ lọc</a></div>
+            @endforelse
+        </div>
+        <div class="border-t border-slate-100 p-4">{{ $users->links() }}</div>
+    </section>
+</div>
 @endsection

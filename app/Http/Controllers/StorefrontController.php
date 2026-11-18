@@ -7,13 +7,16 @@ use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\StockAlert;
+use App\Services\CloudinaryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use RuntimeException;
 
 class StorefrontController extends Controller
 {
@@ -43,20 +46,11 @@ class StorefrontController extends Controller
         abort_unless($product->is_active, 404);
 
         $product->load(['category', 'priceTiers']);
-        $priceGroup = auth()->user()?->account_type === 'business' && auth()->user()->business_approved
-            ? auth()->user()->price_group
-            : 'retail';
-        $visibleTiers = $product->priceTiers->where('price_group', $priceGroup)->values();
-
-        if ($visibleTiers->isEmpty() && $priceGroup !== 'retail') {
-            $visibleTiers = $product->priceTiers->where('price_group', 'retail')->values();
-        }
-
-        $product->setRelation('priceTiers', $visibleTiers);
+        $product->setRelation('priceTiers', $product->priceTiers->where('price_group', 'retail')->values());
 
         return view('storefront.show', [
             'product' => $product,
-            'displayPrice' => $product->priceFor((int) $product->moq, $priceGroup),
+            'displayPrice' => $product->priceFor((int) $product->moq),
             'relatedProducts' => Product::query()
                 ->where('category_id', $product->category_id)
                 ->where('id', '!=', $product->id)
@@ -106,12 +100,14 @@ class StorefrontController extends Controller
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 
-    public function review(Request $request, Product $product): RedirectResponse
+    public function review(Request $request, Product $product, CloudinaryService $cloudinary): RedirectResponse
     {
         $data = $request->validate([
-            'rating' => ['required', 'integer', 'between:1,5'],
-            'title' => ['nullable', 'string', 'max:120'],
+            'rating' => ['required', 'numeric', 'in:1,1.5,2,2.5,3,3.5,4,4.5,5'],
             'body' => ['nullable', 'string', 'max:2000'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:max_width=8000,max_height=8000'],
+            'video' => ['nullable', 'mimes:mp4,mov,webm', 'max:51200'],
         ]);
 
         $hasPurchased = $request->user()->orders()
@@ -123,9 +119,33 @@ class StorefrontController extends Controller
             return back()->withErrors(['review' => 'Bạn cần hoàn tất đơn mua sản phẩm trước khi đánh giá.']);
         }
 
+        $uploadedImages = $request->file('images', []);
+        unset($data['images'], $data['video']);
+
+        $imageUrls = [];
+
+        foreach ($uploadedImages as $uploadedImage) {
+            try {
+                $imageUrls[] = $cloudinary->uploadReviewImage($uploadedImage);
+            } catch (RuntimeException $exception) {
+                throw ValidationException::withMessages(['images' => $exception->getMessage()]);
+            }
+        }
+
+        $data['images'] = $imageUrls === [] ? null : $imageUrls;
+
+        if ($request->hasFile('video')) {
+            try {
+                $data['video_url'] = $cloudinary->uploadReviewVideo($request->file('video'));
+            } catch (RuntimeException $exception) {
+                throw ValidationException::withMessages(['video' => $exception->getMessage()]);
+            }
+        }
+
         Review::query()->create($data + [
             'product_id' => $product->id,
             'user_id' => $request->user()->id,
+            'video_url' => null,
             'is_approved' => false,
         ]);
 

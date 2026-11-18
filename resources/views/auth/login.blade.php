@@ -13,8 +13,8 @@
             <div class="relative z-10 max-w-sm py-10">
                 <p class="text-xs font-bold uppercase tracking-[.2em] text-cyan-200">Chào mừng trở lại</p>
                 <h2 class="mt-3 text-3xl font-extrabold leading-tight xl:text-4xl">Mọi linh kiện cho ý tưởng tiếp theo.</h2>
-                <p class="mt-4 text-sm leading-6 text-blue-100">Đăng nhập để quản lý đơn hàng, xem giá doanh nghiệp và tiếp tục dự án của bạn.</p>
-                <div class="mt-6 flex flex-wrap gap-2"><span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px]">Theo dõi đơn hàng</span><span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px]">Giá doanh nghiệp</span></div>
+                <p class="mt-4 text-sm leading-6 text-blue-100">Đăng nhập để quản lý đơn hàng và tiếp tục dự án của bạn.</p>
+                <div class="mt-6 flex flex-wrap gap-2"><span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px]">Theo dõi đơn hàng</span><span class="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px]">Lưu địa chỉ giao hàng</span></div>
             </div>
             <span class="relative z-10 text-xs text-blue-100/80">Đồng hành cùng cộng đồng maker và kỹ sư.</span>
         </aside>
@@ -23,7 +23,7 @@
             <span class="auth-icon-badge grid size-12 place-items-center rounded-2xl text-blue-700"><svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5m5 5H3"/></svg></span>
             <p class="mt-5 text-xs font-bold uppercase tracking-[.18em] text-blue-700">Tài khoản Linh Kiện</p>
             <h1 id="login-heading" class="mt-2 text-3xl font-extrabold tracking-tight text-[#102653]">Đăng nhập</h1>
-            <p class="mt-1 text-sm text-slate-500">Truy cập đơn hàng, giá doanh nghiệp và cập nhật tài khoản.</p>
+            <p class="mt-1 text-sm text-slate-500">Truy cập đơn hàng và cập nhật thông tin tài khoản.</p>
 
             <form method="POST" action="{{ route('login') }}" class="mt-7 grid gap-4">
                 @csrf

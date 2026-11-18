@@ -24,28 +24,19 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['required', 'string', 'max:30', 'unique:users,phone'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'account_type' => ['required', 'in:individual,business'],
-            'company_name' => ['required_if:account_type,business', 'nullable', 'string', 'max:255'],
-            'tax_number' => ['nullable', 'string', 'max:30'],
             'privacy_accepted' => ['accepted'],
         ]);
 
         unset($data['privacy_accepted']);
 
-        $user = User::query()->create($data + [
-            'role' => 'customer',
-            'price_group' => 'retail',
-            'business_approved' => false,
-        ]);
+        $user = User::query()->create($data + ['role' => 'customer']);
 
         Auth::login($user);
         $request->session()->regenerate();
         $cartController->mergeForUser($request, $user);
 
-        $successMessage = $user->account_type === 'business'
-            ? 'Tài khoản đã được tạo. Hồ sơ doanh nghiệp sẽ hiển thị giá B2B sau khi được duyệt.'
-            : 'Tài khoản đã được tạo. Bạn có thể mua hàng và theo dõi đơn hàng tại đây.';
-
-        return redirect()->route('account.index')->with('success', $successMessage)->withCookie(cookie('cart_token', '', -1));
+        return redirect()->route('account.index')
+            ->with('success', 'Tài khoản đã được tạo. Bạn có thể mua hàng và theo dõi đơn hàng tại đây.')
+            ->withCookie(cookie('cart_token', '', -1));
     }
 }

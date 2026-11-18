@@ -35,7 +35,7 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Giỏ hàng đang trống.');
         }
 
-        $quote = $promotions->quote($cart, $request->user());
+        $quote = $promotions->quote($cart);
         $addresses = $request->user()?->addresses()->orderByDesc('is_default')->latest()->get() ?? collect();
 
         return response()->view('checkout.create', [
@@ -53,7 +53,7 @@ class CheckoutController extends Controller
     {
         $data = $request->validate(['coupon_code' => ['nullable', 'string', 'max:60']]);
         $cart = $cartController->currentCart($request);
-        $quote = $promotions->quote($cart, $request->user(), $data['coupon_code'] ?? null);
+        $quote = $promotions->quote($cart, $data['coupon_code'] ?? null);
 
         return response()->json(['html' => view('checkout.promotion-summary', ['quote' => $quote])->render()]);
     }

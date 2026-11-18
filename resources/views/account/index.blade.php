@@ -72,45 +72,6 @@
             </div>
         </section>
 
-        @if ($user->account_type === 'business')
-            <section @class([
-                'mt-5 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6',
-                'border-emerald-200 bg-gradient-to-r from-emerald-50 to-white' => $user->business_approved,
-                'border-amber-200 bg-gradient-to-r from-amber-50 to-white' => ! $user->business_approved,
-            ]) aria-live="polite">
-                <div class="flex items-start gap-3.5">
-                    <span @class([
-                        'grid size-11 shrink-0 place-items-center rounded-xl bg-white shadow-sm',
-                        'text-emerald-800' => $user->business_approved,
-                        'text-amber-800' => ! $user->business_approved,
-                    ])>
-                        <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 21h18M5 21V7l8-4v18m6 0V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01m7-1v.01m0 3v.01"/></svg>
-                    </span>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <h2 class="text-sm font-bold text-slate-900">{{ $user->business_approved ? 'Tài khoản doanh nghiệp đã được duyệt' : 'Hồ sơ doanh nghiệp đang chờ duyệt' }}</h2>
-                            <span @class([
-                                'rounded-full px-2.5 py-1 text-[10px] font-bold ring-1 ring-inset',
-                                'bg-emerald-100 text-emerald-800 ring-emerald-200' => $user->business_approved,
-                                'bg-amber-100 text-amber-800 ring-amber-200' => ! $user->business_approved,
-                            ])>{{ $user->business_approved ? 'Đã xác minh' : 'Đang xét duyệt' }}</span>
-                        </div>
-                        <p class="mt-1 text-xs leading-5 text-slate-600">
-                            @if ($user->business_approved)
-                                {{ $user->company_name ?: 'Hồ sơ doanh nghiệp' }} · Đang áp dụng nhóm giá <strong class="font-bold text-slate-800">{{ $user->price_group }}</strong> cho đơn hàng.
-                            @else
-                                {{ $user->company_name ?: 'Hồ sơ doanh nghiệp' }} · Đội ngũ kinh doanh sẽ kiểm tra thông tin và cập nhật quyền lợi B2B sau khi duyệt.
-                            @endif
-                        </p>
-                    </div>
-                </div>
-                <a href="{{ route('account.profile.edit') }}" class="inline-flex shrink-0 items-center gap-2 text-xs font-bold text-[#164d8b] hover:text-blue-700 focus:outline-2 focus:outline-offset-4 focus:outline-blue-600">
-                    Cập nhật hồ sơ
-                    <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
-                </a>
-            </section>
-        @endif
-
         <div class="mt-7 grid gap-5 lg:grid-cols-1 lg:gap-6">
             <section class="overflow-hidden rounded-2xl border border-[#dce6f2] bg-white shadow-[0_8px_24px_rgba(27,59,100,.045)]">
                 <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">

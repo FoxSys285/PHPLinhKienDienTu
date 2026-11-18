@@ -84,5 +84,9 @@ class DatabaseSeeder extends Seeder
         $this->call(AdditionalProductsSeeder::class);
         $this->call(ProductImageSeeder::class);
         $this->call(PromotionSeeder::class);
+
+        if (app()->environment('local')) {
+            $this->call(DemoCommerceSeeder::class);
+        }
     }
 }

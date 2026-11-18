@@ -24,6 +24,13 @@ class ProductController extends Controller
 
     public function index(Request $request): View
     {
+        $stats = [
+            'total' => Product::query()->count(),
+            'active' => Product::query()->where('is_active', true)->count(),
+            'low_stock' => Product::query()->where('is_active', true)->whereRaw('stock > reserved_stock AND stock <= reserved_stock + minimum_stock')->count(),
+            'hidden' => Product::query()->where('is_active', false)->count(),
+        ];
+
         $products = Product::query()
             ->with('category')
             ->when($request->filled('q'), function ($query) use ($request): void {
@@ -34,7 +41,7 @@ class ProductController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('admin.products.index', ['products' => $products]);
+        return view('admin.products.index', ['products' => $products, 'stats' => $stats]);
     }
 
     public function create(): View
@@ -43,8 +50,6 @@ class ProductController extends Controller
             'product' => new Product,
             'categories' => $this->categories(),
             'retailTiers' => collect(),
-            'wholesalePrice' => null,
-            'educationPrice' => null,
         ]);
     }
 
@@ -52,19 +57,13 @@ class ProductController extends Controller
     {
         $data = $this->validatedData($request);
         $tiers = $data['tiers'] ?? [];
-        $groupPrices = [
-            'wholesale' => $data['wholesale_price'] ?? null,
-            'education' => $data['education_price'] ?? null,
-        ];
         unset($data['tiers']);
-        unset($data['wholesale_price'], $data['education_price']);
         $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(4));
         $data['specifications'] = $this->parseSpecifications((string) ($data['specifications_text'] ?? ''));
         unset($data['specifications_text']);
 
         $product = Product::query()->create($data);
         $this->savePriceTiers($product, $tiers);
-        $this->saveGroupPrices($product, $groupPrices);
         if ($product->stock > 0) {
             InventoryMovement::query()->create([
                 'product_id' => $product->id,
@@ -89,8 +88,6 @@ class ProductController extends Controller
             'product' => $product,
             'categories' => $this->categories(),
             'retailTiers' => $priceTiers->where('price_group', 'retail')->values(),
-            'wholesalePrice' => $priceTiers->firstWhere('price_group', 'wholesale')?->unit_price,
-            'educationPrice' => $priceTiers->firstWhere('price_group', 'education')?->unit_price,
         ]);
     }
 
@@ -99,12 +96,7 @@ class ProductController extends Controller
         $oldValues = $product->only(['sku', 'price', 'stock', 'is_active']);
         $data = $this->validatedData($request, $product);
         $tiers = $data['tiers'] ?? [];
-        $groupPrices = [
-            'wholesale' => $data['wholesale_price'] ?? null,
-            'education' => $data['education_price'] ?? null,
-        ];
         unset($data['tiers']);
-        unset($data['wholesale_price'], $data['education_price']);
         $data['slug'] = $product->name === $data['name']
             ? $product->slug
             : Str::slug($data['name']).'-'.Str::lower(Str::random(4));
@@ -123,9 +115,8 @@ class ProductController extends Controller
                 'note' => 'Điều chỉnh tồn kho từ màn hình sản phẩm.',
             ]);
         }
-        $product->priceTiers()->delete();
+        $product->priceTiers()->where('price_group', 'retail')->delete();
         $this->savePriceTiers($product, $tiers);
-        $this->saveGroupPrices($product, $groupPrices);
         $auditLogs->record('product.updated', $product, $oldValues, $product->only(['sku', 'price', 'stock', 'is_active']), $request->user());
 
         return redirect()->route('admin.products.index')->with('success', 'Sản phẩm đã được cập nhật.');
@@ -167,8 +158,6 @@ class ProductController extends Controller
             'tiers' => ['nullable', 'array', 'max:5'],
             'tiers.*.minimum_quantity' => ['nullable', 'integer', 'min:2', 'distinct:strict'],
             'tiers.*.unit_price' => ['nullable', 'numeric', 'min:0'],
-            'wholesale_price' => ['nullable', 'numeric', 'min:0'],
-            'education_price' => ['nullable', 'numeric', 'min:0'],
         ], [
             'image.image' => 'Vui lòng chọn một tệp ảnh hợp lệ.',
             'image.mimes' => 'Ảnh sản phẩm phải có định dạng JPG, PNG hoặc WebP.',
@@ -225,24 +214,6 @@ class ProductController extends Controller
                 'minimum_quantity' => $minimum,
                 'maximum_quantity' => $nextMinimum !== null ? $nextMinimum - 1 : null,
                 'unit_price' => (float) $tier['unit_price'],
-            ]);
-        }
-    }
-
-    /** @param array<string, int|float|string|null> $prices */
-    private function saveGroupPrices(Product $product, array $prices): void
-    {
-        foreach ($prices as $priceGroup => $price) {
-            if ($price === null || $price === '') {
-                continue;
-            }
-
-            PriceTier::query()->create([
-                'product_id' => $product->id,
-                'price_group' => $priceGroup,
-                'minimum_quantity' => 1,
-                'maximum_quantity' => null,
-                'unit_price' => (float) $price,
             ]);
         }
     }

@@ -18,9 +18,8 @@ class CartController extends Controller
     {
         $cart = $this->currentCart($request);
         $cart->load('items.product.priceTiers');
-        $priceGroup = $this->priceGroup($request->user());
         $subtotal = $cart->items->sum(fn (CartItem $item): float => $item->product
-            ? $item->product->priceFor((int) $item->quantity, $priceGroup) * $item->quantity
+            ? $item->product->priceFor((int) $item->quantity) * $item->quantity
             : 0);
 
         return response()->view('cart.index', [
@@ -134,10 +133,5 @@ class CartController extends Controller
     public function cartCookie(Cart $cart): Cookie
     {
         return cookie('cart_token', (string) $cart->token, 60 * 24 * 7, '/', null, request()->isSecure(), true, false, 'lax');
-    }
-
-    private function priceGroup(?User $user): string
-    {
-        return $user?->account_type === 'business' && $user->business_approved ? $user->price_group : 'retail';
     }
 }

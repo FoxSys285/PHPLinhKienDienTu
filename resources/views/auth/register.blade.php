@@ -14,7 +14,7 @@
                 <p class="text-xs font-bold uppercase tracking-[.2em] text-cyan-200">Tham gia cộng đồng</p>
                 <h2 class="mt-3 text-3xl font-extrabold leading-tight xl:text-4xl">Tạo nên điều mới từ những linh kiện phù hợp.</h2>
                 <p class="mt-4 text-sm leading-6 text-blue-100">Lưu thông tin mua hàng và theo dõi các đơn hàng của bạn.</p>
-                <div class="mt-7 grid gap-3 text-sm text-blue-50"><span class="flex items-center gap-2"><span class="text-cyan-300">✓</span> Theo dõi đơn hàng thuận tiện</span><span class="flex items-center gap-2"><span class="text-cyan-300">✓</span> Lựa chọn tài khoản cá nhân hoặc doanh nghiệp</span></div>
+                <div class="mt-7 grid gap-3 text-sm text-blue-50"><span class="flex items-center gap-2"><span class="text-cyan-300">✓</span> Theo dõi đơn hàng thuận tiện</span><span class="flex items-center gap-2"><span class="text-cyan-300">✓</span> Lưu địa chỉ giao hàng</span></div>
             </div>
             <span class="relative z-10 text-xs text-blue-100/80">Bắt đầu hành trình công nghệ của bạn.</span>
         </aside>
@@ -32,22 +32,6 @@
                 <label class="grid gap-1.5 text-xs font-bold text-slate-600">Mật khẩu<input required type="password" name="password" minlength="8" autocomplete="new-password" placeholder="Tối thiểu 8 ký tự" class="rounded-xl border-slate-200 px-3 py-3 text-sm font-normal"><span class="text-[10px] font-normal text-slate-400">Tối thiểu 8 ký tự</span></label>
                 <label class="grid gap-1.5 text-xs font-bold text-slate-600">Nhập lại mật khẩu<input required type="password" name="password_confirmation" autocomplete="new-password" placeholder="Nhập lại mật khẩu" class="rounded-xl border-slate-200 px-3 py-3 text-sm font-normal"></label>
 
-                <fieldset class="grid gap-2 sm:col-span-2">
-                    <legend class="text-xs font-bold text-slate-600">Loại tài khoản</legend>
-                    <div class="mt-1 grid gap-3 sm:grid-cols-2">
-                        <label class="auth-account-type-card flex cursor-pointer items-center gap-3 rounded-2xl border border-white/80 bg-white/45 p-4 has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/75">
-                            <input type="radio" name="account_type" value="individual" @checked(old('account_type', 'individual') === 'individual') class="text-blue-700">
-                            <span><strong class="block text-sm text-[#102653]">Cá nhân</strong><span class="text-xs text-slate-500">Maker, sinh viên, kỹ sư</span></span>
-                        </label>
-                        <label class="auth-account-type-card flex cursor-pointer items-center gap-3 rounded-2xl border border-white/80 bg-white/45 p-4 has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50/75">
-                            <input type="radio" name="account_type" value="business" @checked(old('account_type') === 'business') class="text-blue-700">
-                            <span><strong class="block text-sm text-[#102653]">Doanh nghiệp</strong><span class="text-xs text-slate-500">Cần xét duyệt để nhận giá B2B</span></span>
-                        </label>
-                    </div>
-                </fieldset>
-
-                <label class="grid gap-1.5 text-xs font-bold text-slate-600 sm:col-span-2">Tên doanh nghiệp <span class="font-normal text-slate-400">(nếu đăng ký B2B)</span><input name="company_name" value="{{ old('company_name') }}" placeholder="Tên công ty" class="rounded-xl border-slate-200 px-3 py-3 text-sm font-normal"></label>
-                <label class="grid gap-1.5 text-xs font-bold text-slate-600 sm:col-span-2">Mã số thuế <span class="font-normal text-slate-400">(không bắt buộc)</span><input name="tax_number" value="{{ old('tax_number') }}" placeholder="Mã số thuế doanh nghiệp" class="rounded-xl border-slate-200 px-3 py-3 text-sm font-normal"></label>
                 <label class="flex items-start gap-2 text-xs leading-5 text-slate-600 sm:col-span-2"><input required type="checkbox" name="privacy_accepted" value="1" class="mt-0.5 rounded border-slate-300 text-blue-700"><span>Tôi đồng ý với <a href="{{ route('pages.privacy') }}" class="font-bold text-blue-800 underline">chính sách bảo vệ dữ liệu</a>.</span></label>
                 <button class="auth-primary-action rounded-xl px-4 py-3.5 text-sm font-bold text-white sm:col-span-2">Tạo tài khoản</button>
             </form>

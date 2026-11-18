@@ -1,7 +1,6 @@
 @php
     $available = $product->availableStock();
-    $cardPriceGroup = auth()->user()?->account_type === 'business' && auth()->user()->business_approved ? auth()->user()->price_group : 'retail';
-    $unitPrice = $product->priceFor((int) $product->moq, $cardPriceGroup);
+    $unitPrice = $product->priceFor((int) $product->moq);
 @endphp
 <article data-product-card class="group flex h-full min-w-0 flex-col overflow-hidden rounded-3xl border border-blue-200/90 bg-white/85 p-3 shadow-[0_8px_20px_rgba(38,89,180,.06)] transition duration-200 hover:-translate-y-1 hover:border-blue-400 hover:shadow-[0_14px_28px_rgba(38,89,180,.12)]">
     <a href="{{ route('products.show', $product) }}" class="flex flex-1 flex-col">
